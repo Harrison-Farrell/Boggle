@@ -1,0 +1,155 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "windows-template",
+      "hidden": true,
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "linux-template",
+      "hidden": true,
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "linux-debug",
+      "displayName": "Debug",
+      "description": "Optimizations off and debug symbols on",
+      "hidden": false,
+      "binaryDir": "${sourceDir}/build",
+      "inherits": "linux-template",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "linux-release",
+      "displayName": "Release",
+      "description": "Optimizations on and debug symbols off",
+      "hidden": false,
+      "binaryDir": "${sourceDir}/build",
+      "inherits": "linux-template",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "linux-release-with-options",
+      "displayName": "Release with Debug symbols",
+      "description": "Optimizations on and debug symbols on",
+      "hidden": false,
+      "binaryDir": "${sourceDir}/build",
+      "inherits": "linux-template",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    },
+    {
+      "name": "windows-release",
+      "displayName": "Release",
+      "description": "Optimizations on and all options disabled",
+      "hidden": false,
+      "binaryDir": "${sourceDir}/build",
+      "inherits": "windows-template",
+      "generator": "Ninja Multi-Config",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "windows-debug",
+      "displayName": "Debug",
+      "description": "Optimizations off and debug symbols on",
+      "inherits": "windows-template",
+      "hidden": false,
+      "binaryDir": "${sourceDir}/build",
+      "generator": "Ninja Multi-Config",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "windows-release-with-options",
+      "displayName": "Release with Debug symbols",
+      "description": "Optimizations on and debug symbols on",
+      "hidden": false,
+      "binaryDir": "${sourceDir}/build",
+      "inherits": "windows-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "linux-debug",
+      "jobs": 10,
+      "displayName": "Linux Debug Build",
+      "description": "debug build type",
+      "configurePreset": "linux-debug",
+      "configuration": "Debug"
+    },
+    {
+      "name": "linux-release-build",
+      "jobs": 10,
+      "displayName": "Linux Release Build",
+      "description": "release build type",
+      "configurePreset": "linux-release",
+      "configuration": "Release"
+    },
+    {
+      "name": "windows-release-build",
+      "jobs": 10,
+      "displayName": "Windows Release Build",
+      "description": "Build with default release Preset",
+      "configurePreset": "windows-release",
+      "inheritConfigureEnvironment": true,
+      "configuration": "Release"
+    },
+    {
+      "name": "windows-debug-build",
+      "jobs": 10,
+      "displayName": "Windows Debug Build",
+      "description": "Build with developer Presets",
+      "configurePreset": "windows-debug",
+      "inheritConfigureEnvironment": true,
+      "configuration": "Debug"
+    },
+    {
+      "name": "release-with-options-build",
+      "jobs": 10,
+      "displayName": "Windows Release & Test Build",
+      "description": "Release build with all options",
+      "configurePreset": "windows-release-with-options",
+      "inheritConfigureEnvironment": true,
+      "configuration": "RelWithDebInfo"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "all-enabled-test",
+      "description": "Run tests with all-enabled Preset",
+      "configurePreset": "windows-debug",
+      "inheritConfigureEnvironment": true,
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}
