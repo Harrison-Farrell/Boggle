@@ -4,29 +4,24 @@
 #include <algorithm>
 #include <array>
 #include <iostream>
+#include <numeric>
 #include <random>
-#include <string>
-#include <vector>
 
-const std::vector<std::string> BoggleBoard::STANDARD_DICE = {
-    "AWOTOT", "BOAJBO", "HNZNHL", "ISTOES", "TSDIYT", "PSCAOH",
-    "TYTLRE", "ERXIDL", "FSAFPK", "QUIHNM", "SNEIUE", "AEANGE",
-    "RVTWEH", "TMUOIC", "WEENGH", "LYVRDE"};
+BoggleBoard::BoggleBoard() : BoggleBoard(std::random_device{}()) {}
 
-BoggleBoard::BoggleBoard() : board_{} { Shuffle(); }
+BoggleBoard::BoggleBoard(uint32_t seed) : generator_(seed) {
+  std::iota(dice_order_.begin(), dice_order_.end(), uint8_t{0});
+  Shuffle();
+}
 
 void BoggleBoard::Shuffle() {
-  std::random_device seed;
-  std::mt19937 generator(seed());
+  std::shuffle(dice_order_.begin(), dice_order_.end(), generator_);
 
-  std::vector<std::string> dice = STANDARD_DICE;
-  std::shuffle(dice.begin(), dice.end(), generator);
-
-  std::uniform_int_distribution<int> dist(0, DICE_FACES - 1);
+  std::uniform_int_distribution<uint32_t> dist(0, DICE_FACES - 1);
 
   for (uint32_t i = 0; i < TOTAL_DICE; ++i) {
-    const char face = dice[i][dist(generator)];
-    board_[i / BOARD_WIDTH][i % BOARD_HEIGHT] = face;
+    const char face = STANDARD_DICE[dice_order_[i]][dist(generator_)];
+    board_[i / BOARD_WIDTH][i % BOARD_WIDTH] = face;
   }
 }
 

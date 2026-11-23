@@ -1,4 +1,5 @@
 // system includes
+#include <algorithm>
 #include <cctype>
 
 // external includes
@@ -84,5 +85,25 @@ TEST_F(BoggleBoardTest, GetFlattenedBoardAfterShuffle) {
     for (int col = 0; col < 4; ++col) {
       EXPECT_EQ(flattened[(row * BOARD_WIDTH) + col], current_board[row][col]);
     }
+  }
+}
+
+TEST(BoggleBoardSeedTest, SameSeedGivesSameSequence) {
+  BoggleBoard first(42);
+  BoggleBoard second(42);
+  for (int i = 0; i < 100; ++i) {
+    EXPECT_EQ(first.GetFlattenedBoard(), second.GetFlattenedBoard());
+    first.Shuffle();
+    second.Shuffle();
+  }
+}
+
+TEST(BoggleBoardSeedTest, EachDieIsPlacedOnce) {
+  // Only one die has a 'Q' face, so a board can never show two of them
+  BoggleBoard board(7);
+  for (int i = 0; i < 1000; ++i) {
+    const auto cells = board.GetFlattenedBoard();
+    EXPECT_LE(std::count(cells.begin(), cells.end(), 'Q'), 1);
+    board.Shuffle();
   }
 }

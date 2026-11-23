@@ -4,8 +4,8 @@
 // system includes
 #include <array>
 #include <cstdint>
-#include <string>
-#include <vector>
+#include <random>
+#include <string_view>
 
 // global board variables
 constexpr static const uint32_t BOARD_WIDTH = 4;
@@ -20,8 +20,14 @@ constexpr static const uint32_t MAX_WORD_LENGTH = 17;
 /// @details Handles the shuffling and generation a random board
 class BoggleBoard {
 public:
-  /// @brief Default constructor. Initializes and shuffles the board
+  /// @brief Default constructor. Seeds the generator from std::random_device
+  /// and shuffles the board
   BoggleBoard();
+
+  /// @brief Constructs a board with a fixed seed, giving a reproducible
+  /// sequence of boards (useful for benchmarks and tests)
+  /// @param seed seed for the random number generator
+  explicit BoggleBoard(uint32_t seed);
 
   /// @brief Default destructor for BoggleBoard
   ~BoggleBoard() = default;
@@ -57,8 +63,18 @@ public:
   void PrintBoard() const;
 
 private:
-  static const std::vector<std::string> STANDARD_DICE;
-  std::array<std::array<char, BOARD_WIDTH>, BOARD_HEIGHT> board_;
+  static constexpr std::array<std::string_view, TOTAL_DICE> STANDARD_DICE = {
+      "AWOTOT", "BOAJBO", "HNZNHL", "ISTOES", "TSDIYT", "PSCAOH",
+      "TYTLRE", "ERXIDL", "FSAFPK", "QUIHNM", "SNEIUE", "AEANGE",
+      "RVTWEH", "TMUOIC", "WEENGH", "LYVRDE"};
+
+  // Seeded once on construction. Re-seeding on every shuffle is expensive.
+  std::mt19937 generator_;
+
+  // Order in which the dice are placed on the board, shuffled in place
+  std::array<uint8_t, TOTAL_DICE> dice_order_{};
+
+  std::array<std::array<char, BOARD_WIDTH>, BOARD_HEIGHT> board_{};
 };
 
 #endif // BOGGLE_BOARD_H
