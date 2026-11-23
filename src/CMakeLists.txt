@@ -16,10 +16,13 @@ set_target_properties(${APPLICATION_NAME} PROPERTIES
 )
 
 target_include_directories(${APPLICATION_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+find_package(Threads REQUIRED)
+
 target_link_libraries(${APPLICATION_NAME} PUBLIC 
     ${LIBRARY_PREFIX}::Dictionary
     ${LIBRARY_PREFIX}::BoggleBoard
     ${LIBRARY_PREFIX}::BoggleSolver
+    Threads::Threads
 )
 
 # Install rules

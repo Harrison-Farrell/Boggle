@@ -1,11 +1,17 @@
 // system includes
+#include <algorithm>
 #include <chrono>
+#include <cstdint>
 #include <iostream>
+#include <memory>
 #include <string>
+#include <thread>
+#include <vector>
 
 // local includes
 #include "BoggleBoard/BoggleBoard.h"
 #include "BoggleSolver/BoggleSolver.h"
+#include "Dictionary/CompactTrie.h"
 #include "Dictionary/Dictionary.h"
 
 namespace {
@@ -41,32 +47,72 @@ void SolveBoard(BoggleSolver &solver, BoggleBoard &board) {
   }
 }
 
-/// @brief Attempts to solve one million boards. Prints the time taken.
-/// @note The board is shuffled between each solve. The found words are ignored.
-/// @param solver Reference to the BoggleSolver
-/// @param board Reference to teh BoggleBoard
-void SolveOneMillionBoards(BoggleSolver &solver, BoggleBoard &board) {
+/// @brief Shuffles and solves boards spread over several threads
+/// @note Each thread has its own board and solver. They share the trie, which
+/// is read-only. The found words are ignored.
+/// @param trie The trie shared by every solver
+/// @param number_of_boards Total boards to shuffle and solve
+/// @param thread_count Number of threads to use
+/// @return Elapsed time in seconds
+double TimeBoards(const std::shared_ptr<const CompactTrie> &trie,
+                  uint32_t number_of_boards, uint32_t thread_count) {
   using namespace std::chrono;
-  constexpr const int number_of_boards = 1000000;
+
+  const auto start_time = steady_clock::now();
+  {
+    std::vector<std::jthread> workers;
+    workers.reserve(thread_count);
+    for (uint32_t thread = 0; thread < thread_count; ++thread) {
+      // Share the boards out as evenly as possible
+      const uint32_t boards_for_thread =
+          (number_of_boards / thread_count) +
+          (thread < number_of_boards % thread_count ? 1 : 0);
+
+      workers.emplace_back([&trie, boards_for_thread] {
+        BoggleBoard board;
+        BoggleSolver solver(trie);
+        for (uint32_t i = 0; i < boards_for_thread; ++i) {
+          board.Shuffle();
+          [[maybe_unused]] auto found_words =
+              solver.Solve(board.GetFlattenedBoard());
+        }
+      });
+    }
+  } // std::jthread joins on destruction
+  return duration<double>(steady_clock::now() - start_time).count();
+}
+
+/// @brief Attempts to solve one million boards, first on one thread and then
+/// on every hardware thread. Prints the time taken.
+/// @note The board is shuffled between each solve. The found words are ignored.
+/// @param trie The trie built from the dictionary
+void SolveOneMillionBoards(const std::shared_ptr<const CompactTrie> &trie) {
+  constexpr uint32_t number_of_boards = 1000000;
+  const uint32_t thread_count =
+      std::max(1U, std::thread::hardware_concurrency());
 
   std::cout << "\n----------------------------------------------------------\n"
             << "Timing how long it takes to solve 1 million random boards:\n"
             << "NOTE: This time includes the shuffling of the board\n"
             << "It shouldn't take too long... ... ...\n\n";
 
-  auto start_time = high_resolution_clock::now().time_since_epoch().count();
-  for (int i = 0; i < number_of_boards; ++i) {
-    board.Shuffle();
-    auto found_words = solver.Solve(board.GetFlattenedBoard());
-  }
-  auto end_time = high_resolution_clock::now().time_since_epoch().count();
-  auto duration = end_time - start_time;
+  const auto report = [](const char *label, double seconds) {
+    std::cout << label << ": solved " << number_of_boards << " boards in "
+              << seconds << " s, average "
+              << seconds / number_of_boards * 1e6
+              << " us per board to shuffle & solve\n";
+  };
 
-  std::cout << "Solved " << number_of_boards << " boards in "
-            << static_cast<double>(duration) / 1e9 << " s\n"
-            << "Average time to shuffle & solve a board: "
-            << static_cast<double>(duration) / number_of_boards / 1e3
-            << " us\n\n";
+  const double single_seconds = TimeBoards(trie, number_of_boards, 1);
+  report("1 thread  ", single_seconds);
+
+  const double multi_seconds =
+      TimeBoards(trie, number_of_boards, thread_count);
+  const std::string label = std::to_string(thread_count) + " threads";
+  report(label.c_str(), multi_seconds);
+
+  std::cout << "Speed-up from threads: " << single_seconds / multi_seconds
+            << "x\n\n";
 }
 
 } // namespace
@@ -92,12 +138,13 @@ int main(int argc, char *argv[]) {
   std::cout << "Successfully loaded dictionary into the Dictionary!\n";
   std::cout << "\nSolving the following board:\n";
 
+  const auto trie = BoggleSolver::BuildTrie(dictionary);
   BoggleBoard board;
-  BoggleSolver solver(dictionary);
+  BoggleSolver solver(trie);
 
   SolveBoard(solver, board);
 
-  SolveOneMillionBoards(solver, board);
+  SolveOneMillionBoards(trie);
 
   return 0;
 }

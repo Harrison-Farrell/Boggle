@@ -1,4 +1,5 @@
 // system includes
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -6,6 +7,7 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <thread>
 #include <vector>
 
 // external includes
@@ -14,6 +16,7 @@
 // local includes
 #include "BoggleBoard/BoggleBoard.h"
 #include "BoggleSolver/BoggleSolver.h"
+#include "Dictionary/CompactTrie.h"
 #include "Dictionary/Dictionary.h"
 
 namespace {
@@ -28,6 +31,7 @@ const std::string LARGE_DICTIONARY = "boggle_words_138735.txt";
 
 struct BenchmarkData {
   std::shared_ptr<Dictionary> dictionary;
+  std::shared_ptr<const CompactTrie> trie;
   std::vector<std::array<char, BOARD_SIZE>> boards;
 };
 
@@ -40,6 +44,7 @@ const BenchmarkData &GetData(const std::string &dictionary_file) {
   auto [entry, inserted] = cache.try_emplace(dictionary_file);
   if (inserted) {
     entry->second.dictionary = ReadWordsFromFile(dictionary_file);
+    entry->second.trie = BoggleSolver::BuildTrie(entry->second.dictionary);
 
     BoggleBoard board(BOARD_SEED);
     entry->second.boards.reserve(BOARD_COUNT);
@@ -60,14 +65,19 @@ void BM_SolveRandomBoards(benchmark::State &state,
     return;
   }
 
-  BoggleSolver solver(data.dictionary);
-  size_t board_index = 0;
+  BoggleSolver solver(data.trie);
+  // Threads start at different boards so they do not run in lock step
+  size_t board_index = static_cast<size_t>(state.thread_index()) *
+                       data.boards.size() /
+                       static_cast<size_t>(state.threads());
   for (auto _ : state) {
     auto words = solver.Solve(data.boards[board_index]);
     benchmark::DoNotOptimize(words);
     board_index = (board_index + 1) % data.boards.size();
   }
-  state.SetItemsProcessed(state.iterations());
+  // Google Benchmark divides by the wall time summed over all threads, so
+  // scale by the thread count to make items_per_second the total throughput
+  state.SetItemsProcessed(state.iterations() * state.threads());
 }
 
 /// @brief Solves the same board on every iteration (the original benchmark,
@@ -80,7 +90,7 @@ void BM_SolveFixedBoard(benchmark::State &state,
     return;
   }
 
-  BoggleSolver solver(data.dictionary);
+  BoggleSolver solver(data.trie);
   for (auto _ : state) {
     auto words = solver.Solve(data.boards.front());
     benchmark::DoNotOptimize(words);
@@ -96,6 +106,19 @@ BENCHMARK_CAPTURE(BM_SolveRandomBoards, boggle_words_138735, LARGE_DICTIONARY)
     ->Repetitions(10)
     ->ReportAggregatesOnly(true);
 BENCHMARK_CAPTURE(BM_SolveFixedBoard, basic_english_2000, SMALL_DICTIONARY)
+    ->Repetitions(10)
+    ->ReportAggregatesOnly(true);
+
+// Throughput with one solver per hardware thread, all sharing one trie.
+// items_per_second is the total for all threads (boards solved per second).
+BENCHMARK_CAPTURE(BM_SolveRandomBoards, basic_english_2000, SMALL_DICTIONARY)
+    ->Threads(static_cast<int>(std::max(1U, std::thread::hardware_concurrency())))
+    ->UseRealTime()
+    ->Repetitions(10)
+    ->ReportAggregatesOnly(true);
+BENCHMARK_CAPTURE(BM_SolveRandomBoards, boggle_words_138735, LARGE_DICTIONARY)
+    ->Threads(static_cast<int>(std::max(1U, std::thread::hardware_concurrency())))
+    ->UseRealTime()
     ->Repetitions(10)
     ->ReportAggregatesOnly(true);
 
