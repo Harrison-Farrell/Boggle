@@ -60,6 +60,64 @@ TEST(BoggleSolverLogicTest, FindsWordsInFixedBoard) {
   EXPECT_FALSE(std::ranges::find(words, "IT") != words.end());
 }
 
+TEST(BoggleSolverLogicTest, WordReachableTwiceIsReportedOnce) {
+  auto dict = std::make_shared<Dictionary>();
+  dict->Insert("TEA");
+
+  BoggleSolver solver(dict);
+
+  // "TEA" can be traced from either T
+  // T E A X
+  // T X X X
+  // X X X X
+  // X X X X
+  const std::array<char, BOARD_SIZE> board = {'T', 'E', 'A', 'X', 'T', 'X',
+                                              'X', 'X', 'X', 'X', 'X', 'X',
+                                              'X', 'X', 'X', 'X'};
+
+  const auto words = solver.Solve(board);
+  EXPECT_EQ(words, std::vector<std::string>{"TEA"});
+
+  // A second solve of the same board finds it again
+  EXPECT_EQ(solver.Solve(board), std::vector<std::string>{"TEA"});
+}
+
+TEST(BoggleSolverLogicTest, CellsThatAreNotLettersAreSkipped) {
+  auto dict = std::make_shared<Dictionary>();
+  dict->Insert("TEA");
+  dict->Insert("T1A");
+
+  BoggleSolver solver(dict);
+
+  const std::array<char, BOARD_SIZE> board = {'t', 'e', 'a', '1', '\0', '?',
+                                              '#', ' ', '[', '@', '{', '`',
+                                              '~', '0', '9', '_'};
+
+  EXPECT_EQ(solver.Solve(board), std::vector<std::string>{"TEA"});
+}
+
+TEST(BoggleSolverLogicTest, NullDictionaryFindsNothing) {
+  BoggleSolver solver(std::shared_ptr<Dictionary>{});
+  std::array<char, BOARD_SIZE> board{};
+  board.fill('A');
+  EXPECT_TRUE(solver.Solve(board).empty());
+}
+
+TEST(BoggleSolverLogicTest, SolversCanShareATrie) {
+  auto dict = std::make_shared<Dictionary>();
+  dict->Insert("TEA");
+  const auto trie = BoggleSolver::BuildTrie(dict);
+
+  BoggleSolver first(trie);
+  BoggleSolver second(trie);
+
+  const std::array<char, BOARD_SIZE> board = {'T', 'E', 'A', 'X', 'X', 'X',
+                                              'X', 'X', 'X', 'X', 'X', 'X',
+                                              'X', 'X', 'X', 'X'};
+  EXPECT_EQ(first.Solve(board), std::vector<std::string>{"TEA"});
+  EXPECT_EQ(second.Solve(board), std::vector<std::string>{"TEA"});
+}
+
 TEST(BoggleSolverTest, PrecomputeCellsCorrectNeighbour) {
   auto dict = std::make_shared<Dictionary>();
   const BoggleSolver solver(dict);

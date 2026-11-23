@@ -10,7 +10,11 @@
 
 // local includes
 #include "BoggleBoard/BoggleBoard.h"
+#include "Dictionary/CompactTrie.h"
 #include "Dictionary/Dictionary.h"
+
+// Words shorter than this do not score in Boggle
+constexpr uint32_t MIN_WORD_LENGTH = 3;
 
 // Helper macros for bit shifting
 constexpr uint32_t COUNT_SHIFT = 16;
@@ -60,8 +64,20 @@ public:
       CalculateNeighbours();
 
   /// @brief Constructor of the Boggle Solver
-  /// @param dictionary Shared pointer to the loaded dictionary
-  explicit BoggleSolver(std::shared_ptr<Dictionary> dictionary);
+  /// @param dictionary Shared pointer to the loaded dictionary. A compact copy
+  /// is taken, so words inserted afterwards are not found.
+  explicit BoggleSolver(const std::shared_ptr<Dictionary> &dictionary);
+
+  /// @brief Constructs a solver that shares an already built trie. Use this to
+  /// run one solver per thread without copying the dictionary for each.
+  /// @param trie Trie made by BuildTrie()
+  explicit BoggleSolver(std::shared_ptr<const CompactTrie> trie);
+
+  /// @brief Builds the trie used by the solver from a dictionary
+  /// @param dictionary The loaded dictionary
+  /// @return The trie, or nullptr if dictionary is nullptr
+  static std::shared_ptr<const CompactTrie>
+  BuildTrie(const std::shared_ptr<Dictionary> &dictionary);
 
   /// @brief Default destructor
   ~BoggleSolver() = default;
@@ -93,13 +109,11 @@ public:
   }
 
 private:
-  std::shared_ptr<Dictionary> dictionary_;
+  // Read-only, so one trie can be shared by solvers on several threads
+  std::shared_ptr<const CompactTrie> trie_;
 
   // Unique identifier each board to track found words (stop duplicates)
   uint32_t solve_id_ = 0;
-
-  // Buffer to store the current word being built
-  std::string current_word_buffer_;
 
   // Tracks each node index & sets the solve id (stops duplicate words)
   std::vector<uint32_t> word_has_been_found_;

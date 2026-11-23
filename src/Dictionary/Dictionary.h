@@ -93,6 +93,17 @@ public:
     return arena_[index].is_end_of_word;
   }
 
+  /// @brief Gets the letters that have a child node
+  /// @param index The index of the node
+  /// @return Bit i is set if letter 'A' + i has a child, 0 if out of range
+  uint32_t GetChildrenMask(int32_t index) const {
+    if (index < 0 || index >= static_cast<int32_t>(arena_.size()))
+        [[unlikely]] {
+      return 0;
+    }
+    return arena_[index].children_mask;
+  }
+
   // Only handling upper case english letters
   constexpr static const int ALPHABET_SIZE = 26;
 

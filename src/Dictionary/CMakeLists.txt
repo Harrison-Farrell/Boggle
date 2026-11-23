@@ -5,6 +5,7 @@ add_library(${LIBRARY_PREFIX}::${LIBRARY_NAME} ALIAS ${LIBRARY_NAME})
 
 target_sources(${LIBRARY_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/Dictionary.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CompactTrie.cpp
 )
 
 target_link_directories(${LIBRARY_NAME} PUBLIC
