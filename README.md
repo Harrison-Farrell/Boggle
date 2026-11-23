@@ -31,8 +31,9 @@ The solver is divided into three primary components:
                   Queries Prefixes and Words  
 ```
 
-- **Dictionary**: A Trie structure optimized with a vector-based allocation to ensure contiguous memory layout.
-- **BoggleBoard**: Mimics standard die configurations; handles random shuffling and ASCII output.
+- **Dictionary**: A Trie structure optimized with a vector-based allocation to ensure contiguous memory layout. Words can be inserted at any time.
+- **CompactTrie**: A read-only copy of the Dictionary built for solving. Nodes are 8 bytes with their children stored next to each other, and the Boggle rules ("Q" reads as "QU", words need 3+ letters) are folded in when it is built. One copy can be shared by solvers on several threads.
+- **BoggleBoard**: Mimics standard die configurations; handles random shuffling and ASCII output. Can be seeded for a reproducible sequence of boards.
 - **BoggleSolver**: Core search engine employing recursive DFS with bitmask of visited cells and precomputed neighbour lookups.
 
 ---
@@ -58,44 +59,44 @@ cmake --preset windows-release
 cmake --build --preset windows-release-build
 
 # 2. Run the Solver
-.\build\bin\app\Release\SolveBoggle_Release.exe .\resources\basic_english_2000.txt
+.\build\bin\app\Release\SolveBoggleBoard_Release.exe .\resources\basic_english_words_2000.txt
 ```
 
 ### Example Console Output
 ```text
-Building Dictionary from: ..\..\..\..\resources\basic_english_words_2000.txt...
+Building Dictionary from: resources/basic_english_words_2000.txt...
 Successfully loaded dictionary into the Dictionary!
 
 Solving the following board:
 
 ----- Boggle Board -----
-[ V ] [ O ] [ E ] [ T ] 
-[ W ] [ T ] [ T ] [ K ] 
-[ O ] [ R ] [ B ] [ N ] 
-[ S ] [ S ] [ T ] [ Q ] 
+[ D ] [ S ] [ E ] [ A ] 
+[ T ] [ K ] [ Z ] [ H ] 
+[ O ] [ Q ] [ H ] [ O ] 
+[ I ] [ C ] [ E ] [ O ] 
 ------------------------
 
-Found 5 words in 15.4 us:
-VOTE
-TOE
-TWO
-ROT
-SORT
+Found 2 words in 2 us:
+SEA
+ICE
 
 ----------------------------------------------------------
-Timing how long it takes to solve 1 Million random boards:
+Timing how long it takes to solve 1 million random boards:
 NOTE: This time includes the shuffling of the board
-It shouldn't take too long...
+It shouldn't take too long... ... ...
 
-Solved 1000000 boards in 5.47983 s
-Average time to shuffle & solve a board: 5.47983 us
-
+1 thread  : solved 1000000 boards in 2.29259 s, average 2.29259 us per board to shuffle & solve
+32 threads: solved 1000000 boards in 0.135413 s, average 0.135413 us per board to shuffle & solve
+Speed-up from threads: 16.9304x
 ```
 
 ### Unit Testing & Benchmarking & Analysis
 - **Unit Testing**: `ctest --preset all-enabled-test`
-- **Benchmark**: Run `.\BoggleSolverBenchmark_Release.exe` **NOTE:** `basic_english_2000.txt` must be in the same directory as the benchmark. Cmake will copy the file to the same directory on build.
-- **Stress Test**: The application includes a "1 million board" challenge that shuffles and solves 1,000,000 random boards to measure real-world throughput.
+- **Benchmark**: Run `.\build\bin\benchmark\Release\bm_BoggleSolver_Release.exe` from its own directory. **NOTE:** `basic_english_words_2000.txt` and `boggle_words_138735.txt` must be in the same directory as the benchmark. CMake copies them there on build.
+  - `BM_SolveRandomBoards` solves a different board each iteration, cycling through 4,096 seeded boards. This is the number to optimise.
+  - `BM_SolveFixedBoard` solves the same board each iteration (the original benchmark). The branch predictor learns the board, so it reads about 3x faster than real use. It is kept to compare with the history below.
+  - The `threads:N` variants run one solver per hardware thread. `items_per_second` is the total boards solved per second.
+- **Stress Test**: The application includes a "1 million board" challenge that shuffles and solves 1,000,000 random boards, once on one thread and once on every hardware thread, to measure real-world throughput.
 - **Performance Analysis**: The application was ran through [Intel VTune Profiler](https://www.intel.com/content/www/us/en/developer/tools/oneapi/vtune-profiler.html) to determine hot spots and opportunities for optimization.
 - **Intel VTune**: Hot spot summaries can be found in the `images` folder. Intel Vtune was ran using the `basic_english_850.txt` word list & 100,000 Solve iterations.
 
@@ -127,6 +128,24 @@ Average time to shuffle & solve a board: 5.47983 us
 |13 |**Bitmask the Neighbours**| Changed the nieghbours from a struct to a bitmask approach. | 1123ns | 1051ns | ~6% |
 
 **Total Performance Gain:** ~90% reduction in execution time (11,571ns → 1,051ns).
+
+### Round 2: Distinct Boards & Threads
+
+The benchmark above solves the same board over and over, which lets the CPU's branch predictor learn that board. On boards it has not seen, the step 13 solver takes about 3,400ns rather than about 1,000ns. The benchmark now cycles through 4,096 seeded boards, and also uses the 138,735-word list, whose original trie (47.9 MB) did not fit in the CPU's cache.
+
+- Measured on a Windows 11 machine with a 13th Gen Intel(R) Core(TM) i9-13900K (24 cores / 32 threads), so the step 13 figures differ slightly from the table above.
+- Single-thread figures are the median of three runs of 10 repetitions, with the old and new solvers run alternately and pinned to one performance core.
+
+|Step |Improvement | Description | Measured | Before | After | % Gain |
+|:--- |:--- | :--- | :--- | :--- | :--- | :--- |
+|14 |**Seed Once**| `Shuffle()` built a `std::random_device` and `std::mt19937` and copied the dice on every call. The generator is now seeded once and an index array is shuffled in place. | `Shuffle()` alone | 1,103ns | 143ns | ~87% |
+|15 |**Compact Trie**| Added `CompactTrie`: 8-byte nodes (was 112) with children stored together and found by `popcount`. "Q" → "QU" and the 3-letter minimum are folded in when it is built, and words are stored per node, so the search loop no longer handles either rule or builds a string. The 138,735-word trie shrinks from 47.9 MB to 3.4 MB. | Fixed board, 2,000 words | 1,031ns | 727ns | ~29% |
+| | | | Distinct boards, 2,000 words | 3,468ns | 2,217ns | ~36% |
+| | | | Distinct boards, 138,735 words | 18,515ns | 9,913ns | ~46% |
+|16 |**Threads**| One solver per hardware thread, all sharing the read-only trie. Threads take boards 1,000 at a time so that faster cores do more of the work. | Boards/s, 2,000 words | 0.47 M (1 thread) | 9.20 M (32 threads) | 19.8x |
+| | | | Boards/s, 138,735 words | 0.10 M (1 thread) | 2.16 M (32 threads) | 22.2x |
+
+**Round 2 Result:** the 1 million board challenge (shuffle & solve) went from 4.61 s to 0.13 s with the 2,000-word list, and from 19.8 s to 0.50 s with the 138,735-word list.
 
 ---
 
