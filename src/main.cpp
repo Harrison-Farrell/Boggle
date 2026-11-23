@@ -1,5 +1,6 @@
 // system includes
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <iostream>
@@ -58,23 +59,31 @@ double TimeBoards(const std::shared_ptr<const CompactTrie> &trie,
                   uint32_t number_of_boards, uint32_t thread_count) {
   using namespace std::chrono;
 
+  // Threads take boards in chunks as they finish, rather than an equal share
+  // up front, so fast cores (or ones the OS is not busy with) do more of the
+  // work. This matters on CPUs that mix performance and efficiency cores.
+  constexpr uint32_t chunk_size = 1000;
+  std::atomic<uint32_t> next_board{0};
+
   const auto start_time = steady_clock::now();
   {
     std::vector<std::jthread> workers;
     workers.reserve(thread_count);
     for (uint32_t thread = 0; thread < thread_count; ++thread) {
-      // Share the boards out as evenly as possible
-      const uint32_t boards_for_thread =
-          (number_of_boards / thread_count) +
-          (thread < number_of_boards % thread_count ? 1 : 0);
-
-      workers.emplace_back([&trie, boards_for_thread] {
+      workers.emplace_back([&trie, &next_board, number_of_boards] {
         BoggleBoard board;
         BoggleSolver solver(trie);
-        for (uint32_t i = 0; i < boards_for_thread; ++i) {
-          board.Shuffle();
-          [[maybe_unused]] auto found_words =
-              solver.Solve(board.GetFlattenedBoard());
+        while (true) {
+          const uint32_t first = next_board.fetch_add(chunk_size);
+          if (first >= number_of_boards) {
+            break;
+          }
+          const uint32_t last = std::min(first + chunk_size, number_of_boards);
+          for (uint32_t i = first; i < last; ++i) {
+            board.Shuffle();
+            [[maybe_unused]] auto found_words =
+                solver.Solve(board.GetFlattenedBoard());
+          }
         }
       });
     }
