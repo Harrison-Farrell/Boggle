@@ -34,7 +34,7 @@ The solver is divided into three primary components:
 - **Dictionary**: A Trie structure optimized with a vector-based allocation to ensure contiguous memory layout. Words can be inserted at any time.
 - **CompactTrie**: A read-only copy of the Dictionary built for solving. Nodes are 8 bytes with their children stored next to each other, and the Boggle rules ("Q" reads as "QU", words need 3+ letters) are folded in when it is built. One copy can be shared by solvers on several threads.
 - **BoggleBoard**: Mimics standard die configurations; handles random shuffling and ASCII output. Can be seeded for a reproducible sequence of boards.
-- **BoggleSolver**: Core search engine employing recursive DFS with bitmask of visited cells and precomputed neighbour lookups.
+- **BoggleSolver**: Core search engine employing recursive DFS with a bitmask of visited cells and precomputed neighbour lookups. On SSSE3 targets, board letter masks filter out neighbours that cannot extend the current dictionary prefix before the search loop.
 
 ---
 
@@ -146,6 +146,33 @@ The benchmark above solves the same board over and over, which lets the CPU's br
 | | | | Boards/s, 138,735 words | 0.10 M (1 thread) | 2.16 M (32 threads) | 22.2x |
 
 **Round 2 Result:** the 1 million board challenge (shuffle & solve) went from 4.61 s to 0.13 s with the 2,000-word list, and from 19.8 s to 0.50 s with the 138,735-word list.
+
+### Round 3: Letter Masks for Single-Board Solving
+
+Previously, each DFS step checked every unused neighbour against the trie, including letters that could not extend the current prefix. The solver now prepares two 16-byte selectors for the board. At each prefix, an SSSE3 byte shuffle and bit tests convert the trie's 26-bit child-letter mask into matching board cells. Intersecting those cells with the unused neighbours removes failed transitions before the loop. The trie keeps its 8-byte nodes, and the search visits matching cells in the same order as before.
+
+The acceleration is enabled when the compiler target defines `__SSSE3__`, as it does on the measured machine with `-march=native`. Other targets retain the original neighbour traversal. The results below apply to the SSSE3 path.
+
+Measured on 25 November 2026 with a 13th Gen Intel Core i9-13900K on Windows, using Clang 23.1.4 and the Release build (`-O3 -DNDEBUG -march=native`):
+
+| Dictionary | Before | After | Time reduction | Speed-up |
+|:---|---:|---:|---:|---:|
+| 2,000 words | 2,226 ns | 1,519 ns | 31.8% | 1.47x |
+| 138,735 words | 9,951 ns | 7,094 ns | 28.7% | 1.40x |
+
+- Both versions ran on one thread pinned to logical CPU 2 (affinity mask `0x4`), alternating before/after for three pairs of runs. Each run used 10 repetitions with a minimum benchmark time of 0.5 seconds per repetition.
+- Each version used the existing `BM_SolveRandomBoards` benchmark: 4,096 boards generated with seed 2024. The table reports the median of the three run medians from Google Benchmark's elapsed `Time` field, in nanoseconds per board. The [recorded measurements](benchmark/results/letter_masks_2026-11-25.json) also include CPU times and variation within each run.
+- Timing includes board letter preprocessing, search, and construction/destruction of the returned words. It excludes dictionary/trie loading, solver construction, and board shuffling. These figures measure single-thread solve latency over varied boards with an already constructed solver; startup and multithread throughput were not measured in this round.
+
+To repeat the current-version measurement after a Release build, run from the repository root:
+
+```powershell
+Set-Location build/bin/benchmark/Release
+(Get-Process -Id $PID).ProcessorAffinity = 0x4
+.\bm_BoggleSolver_Release.exe '--benchmark_filter=BM_SolveRandomBoards/[^/]+/repeats:10$' '--benchmark_min_time=0.5s' '--benchmark_out=letter_masks.json' '--benchmark_out_format=json'
+```
+
+Validation: all 34 Release tests passed. A new independent word-by-word search checks complete result sets across 128 seeded and special-case boards, including repeated letters, `QU`, lowercase input, invalid cells, and cell reuse. All eight solver tests also passed with the solver compiled for baseline x86-64 without SSSE3, exercising the fallback.
 
 ---
 

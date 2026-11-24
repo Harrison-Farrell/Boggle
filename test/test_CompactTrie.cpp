@@ -52,6 +52,20 @@ TEST(CompactTrieTest, HasChildrenOnlyForPrefixes) {
   EXPECT_FALSE(trie.HasChildren(Walk(trie, "CARD")));
 }
 
+TEST(CompactTrieTest, ChildrenMaskExcludesWordFlagAndUsesQuEdge) {
+  Dictionary dictionary;
+  dictionary.Insert("CAR");
+  dictionary.Insert("CARD");
+  dictionary.Insert("CARZ");
+  dictionary.Insert("QUA");
+  const CompactTrie trie(dictionary, 3);
+
+  EXPECT_EQ(trie.GetChildrenMask(Walk(trie, "CAR")),
+            (1U << ('D' - 'A')) | (1U << ('Z' - 'A')));
+  EXPECT_EQ(trie.GetChildrenMask(Walk(trie, "CARD")), 0U);
+  EXPECT_EQ(trie.GetChildrenMask(Walk(trie, "Q")), 1U << ('A' - 'A'));
+}
+
 TEST(CompactTrieTest, ShortWordsAreNotMarked) {
   Dictionary dictionary;
   dictionary.Insert("AT");

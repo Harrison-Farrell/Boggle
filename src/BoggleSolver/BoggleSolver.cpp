@@ -11,6 +11,10 @@
 #include <utility>
 #include <vector>
 
+#if defined(__SSSE3__)
+#include <tmmintrin.h>
+#endif
+
 // local includes
 #include "BoggleBoard/BoggleBoard.h"
 #include "Dictionary/CompactTrie.h"
@@ -56,12 +60,32 @@ BoggleSolver::Solve(const std::array<char, BOARD_SIZE> &board) {
   // Convert the board to letter indices once. Anything that is not a letter
   // maps to a letter that never has a child, so it can never be part of a word.
   std::array<uint32_t, BOARD_SIZE> letters{};
+#if defined(__SSSE3__)
+  // Each cell selects the byte of a trie mask containing its letter, then
+  // tests the letter's bit. Invalid cells have a zero bit and never match.
+  std::array<uint8_t, BOARD_SIZE> letter_bytes{};
+  std::array<uint8_t, BOARD_SIZE> letter_bits{};
+#endif
   for (uint32_t cell = 0; cell < BOARD_SIZE; ++cell) {
     const int upper = std::toupper(static_cast<unsigned char>(board[cell]));
     letters[cell] = (upper >= 'A' && upper <= 'Z')
                         ? static_cast<uint32_t>(upper - 'A')
                         : CompactTrie::INVALID_LETTER;
+#if defined(__SSSE3__)
+    if (letters[cell] != CompactTrie::INVALID_LETTER) {
+      letter_bytes[cell] = static_cast<uint8_t>(letters[cell] / 8);
+      letter_bits[cell] = static_cast<uint8_t>(1U << (letters[cell] % 8));
+    }
+#endif
   }
+
+#if defined(__SSSE3__)
+  static_assert(BOARD_SIZE == 16, "SIMD letter filtering requires 16 cells");
+  const __m128i byte_selectors =
+      _mm_loadu_si128(reinterpret_cast<const __m128i *>(letter_bytes.data()));
+  const __m128i bit_selectors =
+      _mm_loadu_si128(reinterpret_cast<const __m128i *>(letter_bits.data()));
+#endif
 
   // The trie already reads 'Q' as "QU" and only marks words of at least
   // MIN_WORD_LENGTH letters, so the search does not need to handle either.
@@ -76,7 +100,8 @@ BoggleSolver::Solve(const std::array<char, BOARD_SIZE> &board) {
     }
 
     // No longer word starts with this prefix
-    if (!trie.HasChildren(current_node_index)) {
+    const uint32_t children = trie.GetChildrenMask(current_node_index);
+    if (children == 0) {
       return;
     }
 
@@ -85,6 +110,16 @@ BoggleSolver::Solve(const std::array<char, BOARD_SIZE> &board) {
     // Neighbours of the current cell that are not on the current path
     uint32_t bitmask =
         ADJACENT_CELLS[current_grid_index] & INDEX_MASK & ~visited_mask;
+
+#if defined(__SSSE3__)
+    // Project all outgoing trie letters onto the board's 16 cells at once.
+    const __m128i mask_bytes = _mm_set1_epi32(static_cast<int32_t>(children));
+    const __m128i matching_bits = _mm_and_si128(
+        _mm_shuffle_epi8(mask_bytes, byte_selectors), bit_selectors);
+    const uint32_t matching_cells = static_cast<uint32_t>(
+        ~_mm_movemask_epi8(_mm_cmpeq_epi8(matching_bits, _mm_setzero_si128())));
+    bitmask &= matching_cells;
+#endif
 
     while (bitmask > 0) {
       const auto next_index = static_cast<uint32_t>(std::countr_zero(bitmask));

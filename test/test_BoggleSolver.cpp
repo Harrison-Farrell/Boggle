@@ -1,8 +1,12 @@
 // system includes
 #include <algorithm>
 #include <array>
+#include <cctype>
 #include <memory>
+#include <random>
 #include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 
 // external includes
@@ -12,6 +16,110 @@
 #include "BoggleBoard/BoggleBoard.h"
 #include "BoggleSolver/BoggleSolver.h"
 #include "Dictionary/Dictionary.h"
+
+namespace {
+// Independent word-by-word search: no trie, packed adjacency, or SIMD masks.
+// This also checks that separate paths do not accidentally share visited cells.
+bool CanSpell(const std::array<char, BOARD_SIZE> &board,
+              std::string_view word) {
+  auto search = [&](this auto &&self, uint32_t cell, size_t offset,
+                    std::array<bool, BOARD_SIZE> visited) -> bool {
+    if (visited[cell]) {
+      return false;
+    }
+    const char letter = static_cast<char>(
+        std::toupper(static_cast<unsigned char>(board[cell])));
+    const std::string_view face =
+        letter == 'Q' ? "QU" : std::string_view(&letter, 1);
+    if (word.substr(offset, face.size()) != face) {
+      return false;
+    }
+    offset += face.size();
+    if (offset == word.size()) {
+      return true;
+    }
+    visited[cell] = true;
+    const int row = static_cast<int>(cell / BOARD_WIDTH);
+    const int col = static_cast<int>(cell % BOARD_WIDTH);
+    for (int y = std::max(0, row - 1);
+         y <= std::min(static_cast<int>(BOARD_HEIGHT) - 1, row + 1); ++y) {
+      for (int x = std::max(0, col - 1);
+           x <= std::min(static_cast<int>(BOARD_WIDTH) - 1, col + 1); ++x) {
+        if (self(static_cast<uint32_t>(y) * BOARD_WIDTH + x, offset, visited)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+  for (uint32_t cell = 0; cell < BOARD_SIZE; ++cell) {
+    if (search(cell, 0, {})) {
+      return true;
+    }
+  }
+  return false;
+}
+} // namespace
+
+TEST(BoggleSolverLogicTest, MatchesIndependentSearchAcrossVariedBoards) {
+  // Include every byte of the 26-bit child mask, QU, short words, prefixes,
+  // repeated letters and words that require reusing a cell to be spelled.
+  std::vector<std::string> vocabulary = {
+      "AA",  "AAA",  "AAAA",  "AAAAA", "AEA", "AEAE", "AEAEA", "AET",  "AETS",
+      "QUA", "QUAT", "QUATE", "QUQUA", "QAT", "ZOO",  "ZOOS",  "YET",  "JET",
+      "KEY", "KEYS", "VET",   "VETS",  "TEA", "TEAS", "SEA",   "SEAT", "TEST"};
+  std::mt19937 random(2024);
+  constexpr std::string_view alphabet = "AEIJKOPQSTUVXYZ";
+  for (uint32_t i = 0; i < 2000; ++i) {
+    std::string word;
+    const uint32_t cells = 2 + random() % 6;
+    for (uint32_t j = 0; j < cells; ++j) {
+      const char letter = alphabet[random() % alphabet.size()];
+      word += letter;
+      if (letter == 'Q') {
+        word += 'U';
+      }
+    }
+    vocabulary.push_back(std::move(word));
+  }
+  std::ranges::sort(vocabulary);
+  vocabulary.erase(std::unique(vocabulary.begin(), vocabulary.end()),
+                   vocabulary.end());
+  auto dictionary = std::make_shared<Dictionary>();
+  for (const auto &word : vocabulary) {
+    ASSERT_TRUE(dictionary->Insert(word));
+  }
+  BoggleSolver solver(dictionary);
+  BoggleBoard standard_board(2024);
+  for (uint32_t sample = 0; sample < 128; ++sample) {
+    auto board = standard_board.GetFlattenedBoard();
+    standard_board.Shuffle();
+    if (sample < 64) {
+      for (char &letter : board) {
+        letter = alphabet[random() % alphabet.size()];
+      }
+    }
+    if (sample == 0) {
+      board.fill('A');
+    } else if (sample == 1) {
+      board = {'a', 'e', '?', 'q', 'z', '\0', 't', 'a',
+               'Q', 'u', 'A', 'e', 'i', 'x',  'y', 's'};
+    } else if (sample == 2) {
+      board.fill('#');
+      board[0] = 'A';
+      board[1] = 'E'; // AEA cannot reuse the only A.
+    }
+    std::vector<std::string> expected;
+    for (const auto &word : vocabulary) {
+      if (word.size() >= MIN_WORD_LENGTH && CanSpell(board, word)) {
+        expected.push_back(word);
+      }
+    }
+    auto actual = solver.Solve(board);
+    std::ranges::sort(actual);
+    EXPECT_EQ(actual, expected) << "Board sample " << sample;
+  }
+}
 
 TEST(BoggleSolverLogicTest, FindsWordsInFixedBoard) {
   auto dict = std::make_shared<Dictionary>();
@@ -90,7 +198,7 @@ TEST(BoggleSolverLogicTest, CellsThatAreNotLettersAreSkipped) {
   BoggleSolver solver(dict);
 
   const std::array<char, BOARD_SIZE> board = {'t', 'e', 'a', '1', '\0', '?',
-                                              '#', ' ', '[', '@', '{', '`',
+                                              '#', ' ', '[', '@', '{',  '`',
                                               '~', '0', '9', '_'};
 
   EXPECT_EQ(solver.Solve(board), std::vector<std::string>{"TEA"});

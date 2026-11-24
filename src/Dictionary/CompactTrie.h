@@ -56,7 +56,12 @@ public:
 
   /// @brief Checks if any longer word continues from this node
   bool HasChildren(int32_t node_index) const {
-    return (nodes_[node_index].mask & CHILDREN_MASK) != 0;
+    return GetChildrenMask(node_index) != 0;
+  }
+
+  /// @brief Gets the outgoing letter bits, excluding the end-of-word flag
+  uint32_t GetChildrenMask(int32_t node_index) const {
+    return nodes_[node_index].mask & CHILDREN_MASK;
   }
 
   /// @brief Gets the word that ends at a node

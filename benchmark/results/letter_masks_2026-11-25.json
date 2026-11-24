@@ -1,0 +1,155 @@
+{
+  "date": "2026-11-25",
+  "baseline_commit": "50724d063e2567d2d979c274ff6f6bc432bcf5e4",
+  "cpu": "13th Gen Intel Core i9-13900K",
+  "os": "Windows",
+  "compiler": "Clang 23.1.4",
+  "optimization_flags": "-O3 -DNDEBUG -march=native",
+  "acceleration": "SSSE3",
+  "threads": 1,
+  "logical_cpu": 2,
+  "affinity_mask": "0x4",
+  "benchmark": "BM_SolveRandomBoards",
+  "filter": "BM_SolveRandomBoards/[^/]+/repeats:10$",
+  "board_count": 4096,
+  "board_seed": 2024,
+  "minimum_benchmark_time_seconds": 0.5,
+  "run_order": "before-1, after-1, before-2, after-2, before-3, after-3",
+  "timing_includes": [
+    "board letter preprocessing",
+    "search",
+    "returned word construction and destruction"
+  ],
+  "timing_excludes": [
+    "dictionary/trie construction",
+    "solver construction",
+    "board shuffling"
+  ],
+  "aggregation": "Median of three run medians, using elapsed time",
+  "summary": [
+    {
+      "dictionary": "basic_english_2000",
+      "before_ns": 2225.524999812478,
+      "after_ns": 1518.6886522478126,
+      "time_reduction_percent": 31.760431701473735,
+      "speedup": 1.4654254488031344
+    },
+    {
+      "dictionary": "boggle_words_138735",
+      "before_ns": 9951.240172344535,
+      "after_ns": 7094.412946701466,
+      "time_reduction_percent": 28.708253204283718,
+      "speedup": 1.4026869097000259
+    }
+  ],
+  "runs": [
+    {
+      "pair": 1,
+      "variant": "before",
+      "dictionary": "basic_english_2000",
+      "repetitions": 10,
+      "elapsed_median_ns": 2195.80234370369,
+      "cpu_median_ns": 2148.4375,
+      "elapsed_coefficient_of_variation": 0.017187287781779005
+    },
+    {
+      "pair": 1,
+      "variant": "before",
+      "dictionary": "boggle_words_138735",
+      "repetitions": 10,
+      "elapsed_median_ns": 10178.444292162063,
+      "cpu_median_ns": 9835.335556537695,
+      "elapsed_coefficient_of_variation": 0.011838304061553822
+    },
+    {
+      "pair": 1,
+      "variant": "after",
+      "dictionary": "basic_english_2000",
+      "repetitions": 10,
+      "elapsed_median_ns": 1538.9378399374364,
+      "cpu_median_ns": 1475.3062610239906,
+      "elapsed_coefficient_of_variation": 0.038522781459338594
+    },
+    {
+      "pair": 1,
+      "variant": "after",
+      "dictionary": "boggle_words_138735",
+      "repetitions": 10,
+      "elapsed_median_ns": 7516.164061079117,
+      "cpu_median_ns": 7498.604910714285,
+      "elapsed_coefficient_of_variation": 0.020337924369487347
+    },
+    {
+      "pair": 2,
+      "variant": "before",
+      "dictionary": "basic_english_2000",
+      "repetitions": 10,
+      "elapsed_median_ns": 2225.524999812478,
+      "cpu_median_ns": 2148.4375,
+      "elapsed_coefficient_of_variation": 0.018795450903356645
+    },
+    {
+      "pair": 2,
+      "variant": "before",
+      "dictionary": "boggle_words_138735",
+      "repetitions": 10,
+      "elapsed_median_ns": 9951.240172344535,
+      "cpu_median_ns": 9521.441868563086,
+      "elapsed_coefficient_of_variation": 0.02972004517065508
+    },
+    {
+      "pair": 2,
+      "variant": "after",
+      "dictionary": "basic_english_2000",
+      "repetitions": 10,
+      "elapsed_median_ns": 1518.6886522478126,
+      "cpu_median_ns": 1443.9167661085864,
+      "elapsed_coefficient_of_variation": 0.014909665549803866
+    },
+    {
+      "pair": 2,
+      "variant": "after",
+      "dictionary": "boggle_words_138735",
+      "repetitions": 10,
+      "elapsed_median_ns": 7094.412946701466,
+      "cpu_median_ns": 6975.4464285714275,
+      "elapsed_coefficient_of_variation": 0.017561280190456937
+    },
+    {
+      "pair": 3,
+      "variant": "before",
+      "dictionary": "basic_english_2000",
+      "repetitions": 10,
+      "elapsed_median_ns": 2225.894062576117,
+      "cpu_median_ns": 2172.8515625,
+      "elapsed_coefficient_of_variation": 0.018464467042681322
+    },
+    {
+      "pair": 3,
+      "variant": "before",
+      "dictionary": "boggle_words_138735",
+      "repetitions": 10,
+      "elapsed_median_ns": 9850.215622745747,
+      "cpu_median_ns": 9416.810639238218,
+      "elapsed_coefficient_of_variation": 0.02093422543623841
+    },
+    {
+      "pair": 3,
+      "variant": "after",
+      "dictionary": "basic_english_2000",
+      "repetitions": 10,
+      "elapsed_median_ns": 1518.2750143980193,
+      "cpu_median_ns": 1475.3062610239906,
+      "elapsed_coefficient_of_variation": 0.022875334764599534
+    },
+    {
+      "pair": 3,
+      "variant": "after",
+      "dictionary": "boggle_words_138735",
+      "repetitions": 10,
+      "elapsed_median_ns": 7069.517857287012,
+      "cpu_median_ns": 6766.183035714285,
+      "elapsed_coefficient_of_variation": 0.023524998963963116
+    }
+  ]
+}
