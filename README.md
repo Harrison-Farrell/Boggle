@@ -34,7 +34,7 @@ The solver is divided into three primary components:
 - **Dictionary**: A Trie structure optimized with a vector-based allocation to ensure contiguous memory layout. Words can be inserted at any time.
 - **CompactTrie**: A read-only copy of the Dictionary built for solving. Nodes are 8 bytes with their children stored next to each other, and the Boggle rules ("Q" reads as "QU", words need 3+ letters) are folded in when it is built. One copy can be shared by solvers on several threads.
 - **BoggleBoard**: Mimics standard die configurations; handles random shuffling and ASCII output. Can be seeded for a reproducible sequence of boards.
-- **BoggleSolver**: Core search engine employing recursive DFS with a bitmask of visited cells and precomputed neighbour lookups. On SSSE3 targets, board letter masks filter out neighbours that cannot extend the current dictionary prefix before the search loop.
+- **BoggleSolver**: Core search engine employing recursive DFS with a bitmask of visited cells and precomputed neighbour lookups. On SSSE3 targets, board letter masks filter out neighbours that cannot extend the current dictionary prefix before the search loop. Results can be returned as owned strings or written into a reusable buffer of views into the trie text.
 
 ---
 
@@ -61,6 +61,20 @@ cmake --build --preset windows-release-build
 # 2. Run the Solver
 .\build\bin\app\Release\SolveBoggleBoard_Release.exe .\resources\basic_english_words_2000.txt
 ```
+
+### Solving Without Copying Word Text
+
+`Solve(board)` returns owned `std::string` results. Call `SolveInto(board, words)` to collect views into the dictionary's immutable word text instead:
+
+```cpp
+const auto trie = BoggleSolver::BuildTrie(dictionary);
+BoggleSolver solver(trie);
+std::vector<std::string_view> words;
+solver.SolveInto(board.GetFlattenedBoard(), words);
+// Reusing words on another call retains its allocated capacity.
+```
+
+`SolveInto` clears previous results, including when the solver has a null trie, and preserves the word order of `Solve`. Views remain valid across later solves while their `CompactTrie` is alive. Keep the shared trie alive if views must outlive the solver, or use `Solve` for independently owned results. Both APIs share the same search implementation without an intermediate result vector. The console example uses fresh views for its displayed board and reuses one output buffer per worker in the million-board challenge.
 
 ### Example Console Output
 ```text
@@ -93,7 +107,8 @@ Speed-up from threads: 16.9304x
 ### Unit Testing & Benchmarking & Analysis
 - **Unit Testing**: `ctest --preset all-enabled-test`
 - **Benchmark**: Run `.\build\bin\benchmark\Release\bm_BoggleSolver_Release.exe` from its own directory. **NOTE:** `basic_english_words_2000.txt` and `boggle_words_138735.txt` must be in the same directory as the benchmark. CMake copies them there on build.
-  - `BM_SolveRandomBoards` solves a different board each iteration, cycling through 4,096 seeded boards. This is the number to optimise.
+  - `BM_SolveRandomBoards` measures the owning `Solve` API on a different board each iteration, cycling through 4,096 seeded boards.
+  - `BM_SolveViewsFresh` measures `SolveInto` with a new output vector each iteration, including its allocations and destruction. `BM_SolveViewsReused` retains capacity between solves. Both use the same 4,096 boards without pre-reserving output capacity or doing an untimed warm-up.
   - `BM_SolveFixedBoard` solves the same board each iteration (the original benchmark). The branch predictor learns the board, so it reads about 3x faster than real use. It is kept to compare with the history below.
   - The `threads:N` variants run one solver per hardware thread. `items_per_second` is the total boards solved per second.
 - **Stress Test**: The application includes a "1 million board" challenge that shuffles and solves 1,000,000 random boards, once on one thread and once on every hardware thread, to measure real-world throughput.
@@ -173,6 +188,33 @@ Set-Location build/bin/benchmark/Release
 ```
 
 Validation: all 34 Release tests passed. A new independent word-by-word search checks complete result sets across 128 seeded and special-case boards, including repeated letters, `QU`, lowercase input, invalid cells, and cell reuse. All eight solver tests also passed with the solver compiled for baseline x86-64 without SSSE3, exercising the fallback.
+
+### Round 4: Reusable Word Views
+
+`SolveInto(board, words)` appends `std::string_view` results into a caller-owned vector after clearing it. Word characters stay in the trie, and retaining the vector between solves avoids repeated allocation once it has sufficient capacity. `Solve` remains available for owned strings. Both APIs use the same search, specialized for their output type without a temporary collection or a callback on each word. The console application now uses views, and its displayed solve time uses an explicit `std::chrono` duration in microseconds.
+
+Measured on 25 November 2026 with the same i9-13900K, Windows, Clang 23.1.4, Release flags, and SSSE3 search as Round 3. The baseline is the previous commit (`bdba08a`), rebuilt and measured again in this session. All times are elapsed nanoseconds per board:
+
+| Dictionary | Previous `Solve` | Current `Solve` | Views, fresh buffer | Views, reused buffer |
+|:---|---:|---:|---:|---:|
+| 2,000 words | 1,534 ns | 1,565 ns | 1,484 ns | 1,214 ns |
+| 138,735 words | 7,594 ns | 7,312 ns | 6,522 ns | 5,942 ns |
+
+Compared with the previous commit, a reused buffer reduces solve time by **20.9%** and **21.8%**, respectively. Fresh buffers reduce measured time by **3.3%** and **14.1%**; the smaller gain is close to normal run-to-run variation. Fresh views still allocate vector storage. The current `Solve` column records the owning API after the shared-search refactor, so its timing is visible separately from the new API's gains.
+
+- Each column is the median of three run medians, each with 10 repetitions and a minimum benchmark time of 0.5 seconds. The runs use one thread pinned to logical CPU 2 (`0x4`) and the same 4,096 boards seeded with 2024. Current-version benchmark repetitions were randomly interleaved; baseline/current process order was reversed for the second pair.
+- Fresh-buffer timings include vector construction, growth, and destruction on each iteration. Reused-buffer timings start with an empty vector, with no reserve or untimed warm-up; capacity growth is included and amortized across that run. All modes include letter preprocessing, search, and output collection, and exclude dictionary/trie loading, solver construction, board shuffling, and process startup. These measure varied boards with a prepared solver, rather than cold startup.
+- The [recorded measurements](benchmark/results/string_views_2026-11-25.json) include all run medians, CPU times, and variation. One large-dictionary baseline run had an elapsed-time outlier; all repetitions were retained and medians used.
+
+To compare the three current output modes after a Release build, run from the repository root:
+
+```powershell
+Set-Location build/bin/benchmark/Release
+(Get-Process -Id $PID).ProcessorAffinity = 0x4
+.\bm_BoggleSolver_Release.exe '--benchmark_filter=BM_Solve(RandomBoards|ViewsFresh|ViewsReused)/[^/]+/repeats:10$' '--benchmark_enable_random_interleaving=true' '--benchmark_min_time=0.5s' '--benchmark_out=string_views.json' '--benchmark_out_format=json'
+```
+
+Validation: all 36 Release tests passed, including comparison of both APIs against the independent search across 128 boards. Added checks cover output order, capacity reuse, clearing stale results, null tries, and views borrowing trie text across later solves and solver destruction while a shared trie remains alive. All 10 solver tests also passed with baseline x86-64 compilation without SSSE3. The console example and its million-board challenge completed successfully.
 
 ---
 

@@ -41,8 +41,21 @@ BoggleSolver::BuildTrie(const std::shared_ptr<Dictionary> &dictionary) {
 std::vector<std::string>
 BoggleSolver::Solve(const std::array<char, BOARD_SIZE> &board) {
   std::vector<std::string> found_words;
+  SolveImpl(board, found_words);
+  return found_words;
+}
+
+void BoggleSolver::SolveInto(const std::array<char, BOARD_SIZE> &board,
+                             std::vector<std::string_view> &words) {
+  SolveImpl(board, words);
+}
+
+template <typename Word>
+void BoggleSolver::SolveImpl(const std::array<char, BOARD_SIZE> &board,
+                             std::vector<Word> &found_words) {
+  found_words.clear();
   if (!trie_) [[unlikely]] {
-    return found_words;
+    return;
   }
   const CompactTrie &trie = *trie_;
 
@@ -145,6 +158,4 @@ BoggleSolver::Solve(const std::array<char, BOARD_SIZE> &board) {
       depth_first_search(current_grid_index, 0, current_node_index);
     }
   }
-
-  return found_words;
 }

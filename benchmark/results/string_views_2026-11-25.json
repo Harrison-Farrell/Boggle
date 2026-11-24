@@ -1,0 +1,311 @@
+{
+  "date": "2026-11-25",
+  "baseline_commit": "bdba08a845ce0e8edf43ac69c03e8363e07a1219",
+  "cpu": "13th Gen Intel Core i9-13900K",
+  "os": "Windows",
+  "compiler": "Clang 23.1.4",
+  "optimization_flags": "-O3 -DNDEBUG -march=native",
+  "search_acceleration": "SSSE3 in both versions",
+  "threads": 1,
+  "logical_cpu": 2,
+  "affinity_mask": "0x4",
+  "benchmark_filter": "BM_Solve(RandomBoards|ViewsFresh|ViewsReused)/[^/]+/repeats:10$",
+  "current_run_random_interleaving": true,
+  "board_count": 4096,
+  "board_seed": 2024,
+  "minimum_benchmark_time_seconds": 0.5,
+  "run_order": [
+    "before-1",
+    "after-1",
+    "after-2",
+    "before-2",
+    "before-3",
+    "after-3"
+  ],
+  "aggregation": "Median of three run medians, using elapsed time",
+  "reused_buffer_setup": "Initially empty; no reserve or untimed warm-up; growth included and amortized across each run",
+  "fresh_buffer_setup": "Vector construction, growth and destruction on every timed iteration",
+  "timing_includes": [
+    "board letter preprocessing",
+    "search",
+    "output collection",
+    "fresh output allocations and destruction, or amortized growth for reused output"
+  ],
+  "timing_excludes": [
+    "dictionary/trie construction",
+    "solver construction",
+    "board shuffling",
+    "process startup"
+  ],
+  "notes": [
+    "Previous owned API is measured from the saved baseline executable; current owned API checks the shared-search refactor.",
+    "One large-dictionary baseline run had an elapsed-time outlier; all repetitions were retained and medians used.",
+    "These are varying-board measurements with a prepared solver, not a cold-start benchmark."
+  ],
+  "summary": [
+    {
+      "dictionary": "basic_english_2000",
+      "previous_owned_ns": 1534.2214285608081,
+      "current_owned_ns": 1565.3154015516131,
+      "fresh_views_ns": 1483.570286250962,
+      "reused_views_ns": 1214.147410896008,
+      "fresh_time_reduction_vs_previous_percent": 3.3014232083409256,
+      "reused_time_reduction_vs_previous_percent": 20.862309162573013,
+      "fresh_time_reduction_vs_current_owned_percent": 5.2222775818612455,
+      "reused_time_reduction_vs_current_owned_percent": 22.434327951255774
+    },
+    {
+      "dictionary": "boggle_words_138735",
+      "previous_owned_ns": 7593.605467783554,
+      "current_owned_ns": 7312.038000673056,
+      "fresh_views_ns": 6522.491965110281,
+      "reused_views_ns": 5941.522999200971,
+      "fresh_time_reduction_vs_previous_percent": 14.105466859156069,
+      "reused_time_reduction_vs_previous_percent": 21.756232603756775,
+      "fresh_time_reduction_vs_current_owned_percent": 10.797892947083954,
+      "reused_time_reduction_vs_current_owned_percent": 18.743269678657747
+    }
+  ],
+  "runs": [
+    {
+      "run": 1,
+      "version": "before",
+      "mode": "owned",
+      "dictionary": "basic_english_2000",
+      "repetitions": 10,
+      "elapsed_median_ns": 1504.4654017921337,
+      "cpu_median_ns": 1464.84375,
+      "elapsed_coefficient_of_variation": 0.013669654647381563
+    },
+    {
+      "run": 1,
+      "version": "before",
+      "mode": "owned",
+      "dictionary": "boggle_words_138735",
+      "repetitions": 10,
+      "elapsed_median_ns": 7593.605467783554,
+      "cpu_median_ns": 7324.21875,
+      "elapsed_coefficient_of_variation": 0.018153959703516624
+    },
+    {
+      "run": 1,
+      "version": "after",
+      "mode": "owned",
+      "dictionary": "boggle_words_138735",
+      "repetitions": 10,
+      "elapsed_median_ns": 7242.003905828044,
+      "cpu_median_ns": 7149.832589285715,
+      "elapsed_coefficient_of_variation": 0.01141885869818688
+    },
+    {
+      "run": 1,
+      "version": "after",
+      "mode": "fresh_views",
+      "dictionary": "basic_english_2000",
+      "repetitions": 10,
+      "elapsed_median_ns": 1483.570286250962,
+      "cpu_median_ns": 1381.1377762777784,
+      "elapsed_coefficient_of_variation": 0.024541559112770946
+    },
+    {
+      "run": 1,
+      "version": "after",
+      "mode": "reused_views",
+      "dictionary": "boggle_words_138735",
+      "repetitions": 10,
+      "elapsed_median_ns": 5937.282143609731,
+      "cpu_median_ns": 5580.357142857143,
+      "elapsed_coefficient_of_variation": 0.02064966144385763
+    },
+    {
+      "run": 1,
+      "version": "after",
+      "mode": "owned",
+      "dictionary": "basic_english_2000",
+      "repetitions": 10,
+      "elapsed_median_ns": 1557.102865059706,
+      "cpu_median_ns": 1475.3062610239906,
+      "elapsed_coefficient_of_variation": 0.023356691530523967
+    },
+    {
+      "run": 1,
+      "version": "after",
+      "mode": "reused_views",
+      "dictionary": "basic_english_2000",
+      "repetitions": 10,
+      "elapsed_median_ns": 1210.893202915031,
+      "cpu_median_ns": 1171.875,
+      "elapsed_coefficient_of_variation": 0.009082013478566261
+    },
+    {
+      "run": 1,
+      "version": "after",
+      "mode": "fresh_views",
+      "dictionary": "boggle_words_138735",
+      "repetitions": 10,
+      "elapsed_median_ns": 6522.491965110281,
+      "cpu_median_ns": 6208.147321428571,
+      "elapsed_coefficient_of_variation": 0.027660275204293285
+    },
+    {
+      "run": 2,
+      "version": "before",
+      "mode": "owned",
+      "dictionary": "basic_english_2000",
+      "repetitions": 10,
+      "elapsed_median_ns": 1534.2214285608081,
+      "cpu_median_ns": 1464.84375,
+      "elapsed_coefficient_of_variation": 0.03176341976499344
+    },
+    {
+      "run": 2,
+      "version": "before",
+      "mode": "owned",
+      "dictionary": "boggle_words_138735",
+      "repetitions": 10,
+      "elapsed_median_ns": 7256.762945741813,
+      "cpu_median_ns": 7045.200892857143,
+      "elapsed_coefficient_of_variation": 0.41677632011542903
+    },
+    {
+      "run": 2,
+      "version": "after",
+      "mode": "fresh_views",
+      "dictionary": "basic_english_2000",
+      "repetitions": 10,
+      "elapsed_median_ns": 1456.3832670975635,
+      "cpu_median_ns": 1381.1377762777784,
+      "elapsed_coefficient_of_variation": 0.019144606672643224
+    },
+    {
+      "run": 2,
+      "version": "after",
+      "mode": "owned",
+      "dictionary": "boggle_words_138735",
+      "repetitions": 10,
+      "elapsed_median_ns": 7312.038000673056,
+      "cpu_median_ns": 6953.125,
+      "elapsed_coefficient_of_variation": 0.0306889639393788
+    },
+    {
+      "run": 2,
+      "version": "after",
+      "mode": "fresh_views",
+      "dictionary": "boggle_words_138735",
+      "repetitions": 10,
+      "elapsed_median_ns": 6444.516517928734,
+      "cpu_median_ns": 6277.901785714284,
+      "elapsed_coefficient_of_variation": 0.018388539823894996
+    },
+    {
+      "run": 2,
+      "version": "after",
+      "mode": "reused_views",
+      "dictionary": "basic_english_2000",
+      "repetitions": 10,
+      "elapsed_median_ns": 1214.147410896008,
+      "cpu_median_ns": 1143.9732142857142,
+      "elapsed_coefficient_of_variation": 0.015767564001011827
+    },
+    {
+      "run": 2,
+      "version": "after",
+      "mode": "reused_views",
+      "dictionary": "boggle_words_138735",
+      "repetitions": 10,
+      "elapsed_median_ns": 5941.522999200971,
+      "cpu_median_ns": 5781.25,
+      "elapsed_coefficient_of_variation": 0.03924059336046134
+    },
+    {
+      "run": 2,
+      "version": "after",
+      "mode": "owned",
+      "dictionary": "basic_english_2000",
+      "repetitions": 10,
+      "elapsed_median_ns": 1565.3154015516131,
+      "cpu_median_ns": 1482.2823660714287,
+      "elapsed_coefficient_of_variation": 0.025384938376169248
+    },
+    {
+      "run": 3,
+      "version": "before",
+      "mode": "owned",
+      "dictionary": "basic_english_2000",
+      "repetitions": 10,
+      "elapsed_median_ns": 1590.2327945048614,
+      "cpu_median_ns": 1491.0010084816925,
+      "elapsed_coefficient_of_variation": 0.014460304236676722
+    },
+    {
+      "run": 3,
+      "version": "before",
+      "mode": "owned",
+      "dictionary": "boggle_words_138735",
+      "repetitions": 10,
+      "elapsed_median_ns": 7849.050221661205,
+      "cpu_median_ns": 7411.411830357142,
+      "elapsed_coefficient_of_variation": 0.03956062812645583
+    },
+    {
+      "run": 3,
+      "version": "after",
+      "mode": "reused_views",
+      "dictionary": "basic_english_2000",
+      "repetitions": 10,
+      "elapsed_median_ns": 1278.4215178856227,
+      "cpu_median_ns": 1171.875,
+      "elapsed_coefficient_of_variation": 0.020307600211090716
+    },
+    {
+      "run": 3,
+      "version": "after",
+      "mode": "owned",
+      "dictionary": "basic_english_2000",
+      "repetitions": 10,
+      "elapsed_median_ns": 1642.2777901295508,
+      "cpu_median_ns": 1517.1595982142858,
+      "elapsed_coefficient_of_variation": 0.012086461077866664
+    },
+    {
+      "run": 3,
+      "version": "after",
+      "mode": "fresh_views",
+      "dictionary": "basic_english_2000",
+      "repetitions": 10,
+      "elapsed_median_ns": 1524.475368275946,
+      "cpu_median_ns": 1443.9167661085864,
+      "elapsed_coefficient_of_variation": 0.0159298190159155
+    },
+    {
+      "run": 3,
+      "version": "after",
+      "mode": "fresh_views",
+      "dictionary": "boggle_words_138735",
+      "repetitions": 10,
+      "elapsed_median_ns": 6995.538504790083,
+      "cpu_median_ns": 6452.287946428572,
+      "elapsed_coefficient_of_variation": 0.05071453468988539
+    },
+    {
+      "run": 3,
+      "version": "after",
+      "mode": "owned",
+      "dictionary": "boggle_words_138735",
+      "repetitions": 10,
+      "elapsed_median_ns": 7889.033482310229,
+      "cpu_median_ns": 7498.604910714285,
+      "elapsed_coefficient_of_variation": 0.020852746101755044
+    },
+    {
+      "run": 3,
+      "version": "after",
+      "mode": "reused_views",
+      "dictionary": "boggle_words_138735",
+      "repetitions": 10,
+      "elapsed_median_ns": 6340.008482636351,
+      "cpu_median_ns": 5998.883928571429,
+      "elapsed_coefficient_of_variation": 0.0329862638968008
+    }
+  ]
+}

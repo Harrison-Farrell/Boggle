@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 // local includes
@@ -90,10 +91,20 @@ public:
   BoggleSolver(BoggleSolver &&) = delete;
   BoggleSolver &operator=(BoggleSolver &&) = delete;
 
-  /// @brief Returns words greater than 3 letters on the board
+  /// @brief Returns owned words of at least 3 letters on the board
   /// @param board Flattened 1D boggle board
   /// @return A vector of words found on the board
   std::vector<std::string> Solve(const std::array<char, BOARD_SIZE> &board);
+
+  /// @brief Writes word views into a caller-owned buffer, retaining its
+  /// capacity
+  /// @param board Flattened 1D boggle board
+  /// @param words Cleared before searching, including with a null trie
+  /// @details Views refer to immutable trie text and remain valid while that
+  /// CompactTrie is alive, including across later solves. Retain the shared
+  /// trie if views must outlive this solver. No word text is copied.
+  void SolveInto(const std::array<char, BOARD_SIZE> &board,
+                 std::vector<std::string_view> &words);
 
   /// @brief Helper method to extract the neighbor count from packed data
   /// @param packed The packed 32-bit neighbor data
@@ -109,6 +120,12 @@ public:
   }
 
 private:
+  // Instantiated in the implementation for strings and string views, so both
+  // APIs use the same search without an intermediate result vector.
+  template <typename Word>
+  void SolveImpl(const std::array<char, BOARD_SIZE> &board,
+                 std::vector<Word> &found_words);
+
   // Read-only, so one trie can be shared by solvers on several threads
   std::shared_ptr<const CompactTrie> trie_;
 

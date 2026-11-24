@@ -90,6 +90,7 @@ TEST(BoggleSolverLogicTest, MatchesIndependentSearchAcrossVariedBoards) {
     ASSERT_TRUE(dictionary->Insert(word));
   }
   BoggleSolver solver(dictionary);
+  std::vector<std::string_view> views;
   BoggleBoard standard_board(2024);
   for (uint32_t sample = 0; sample < 128; ++sample) {
     auto board = standard_board.GetFlattenedBoard();
@@ -116,9 +117,75 @@ TEST(BoggleSolverLogicTest, MatchesIndependentSearchAcrossVariedBoards) {
       }
     }
     auto actual = solver.Solve(board);
+    solver.SolveInto(board, views);
+    EXPECT_EQ(std::vector<std::string>(views.begin(), views.end()), actual)
+        << "View order and contents on board sample " << sample;
     std::ranges::sort(actual);
     EXPECT_EQ(actual, expected) << "Board sample " << sample;
   }
+}
+
+TEST(BoggleSolverLogicTest, SolveIntoReusesCapacityAndClearsResults) {
+  auto dictionary = std::make_shared<Dictionary>();
+  dictionary->Insert("TEA");
+  BoggleSolver solver(dictionary);
+  const std::array<char, BOARD_SIZE> board = {'t', 'e', 'a', '?', 'T', '#',
+                                              '#', '#', '#', '#', '#', '#',
+                                              '#', '#', '#', '#'};
+  std::vector<std::string_view> words;
+  words.reserve(64);
+  const auto capacity = words.capacity();
+  const auto *storage = words.data();
+  for (int repeat = 0; repeat < 3; ++repeat) {
+    solver.SolveInto(board, words);
+    EXPECT_EQ(words, std::vector<std::string_view>{"TEA"});
+    EXPECT_EQ(words.capacity(), capacity);
+    EXPECT_EQ(words.data(), storage);
+    EXPECT_EQ(solver.Solve(board), std::vector<std::string>{"TEA"});
+  }
+  std::array<char, BOARD_SIZE> empty{};
+  solver.SolveInto(empty, words);
+  EXPECT_TRUE(words.empty());
+  EXPECT_EQ(words.capacity(), capacity);
+
+  words.emplace_back("stale result");
+  BoggleSolver null_solver(std::shared_ptr<Dictionary>{});
+  null_solver.SolveInto(board, words);
+  EXPECT_TRUE(words.empty());
+  EXPECT_EQ(words.capacity(), capacity);
+}
+
+TEST(BoggleSolverLogicTest, ViewsBorrowTrieTextAndSurviveLaterSolves) {
+  auto dictionary = std::make_shared<Dictionary>();
+  constexpr std::string_view long_word = "ABCDEFGHIJKLMNOP";
+  dictionary->Insert(std::string(long_word));
+  dictionary->Insert("ABC");
+  const auto trie = BoggleSolver::BuildTrie(dictionary);
+  int32_t node = CompactTrie::GetRootIndex();
+  for (const char letter : long_word) {
+    node = trie->GetNextNodeIndex(node, static_cast<uint32_t>(letter - 'A'));
+  }
+  ASSERT_NE(node, -1);
+  std::vector<std::string_view> saved;
+  {
+    BoggleSolver solver(trie);
+    const std::array<char, BOARD_SIZE> board = {'A', 'B', 'C', 'D', 'H', 'G',
+                                                'F', 'E', 'I', 'J', 'K', 'L',
+                                                'P', 'O', 'N', 'M'};
+    std::vector<std::string_view> words;
+    solver.SolveInto(board, words);
+    const auto found = std::ranges::find(words, long_word);
+    ASSERT_NE(found, words.end());
+    EXPECT_EQ(found->data(), trie->GetWord(node).data());
+    saved = words;
+    std::array<char, BOARD_SIZE> empty{};
+    solver.SolveInto(empty, words);
+    EXPECT_TRUE(words.empty());
+    EXPECT_EQ(solver.Solve(board),
+              (std::vector<std::string>{"ABC", std::string(long_word)}));
+  }
+  // The retained shared trie owns the text after the solver is destroyed.
+  EXPECT_EQ(saved, (std::vector<std::string_view>{"ABC", long_word}));
 }
 
 TEST(BoggleSolverLogicTest, FindsWordsInFixedBoard) {

@@ -7,6 +7,7 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <vector>
 
@@ -80,6 +81,44 @@ void BM_SolveRandomBoards(benchmark::State &state,
   state.SetItemsProcessed(state.iterations() * state.threads());
 }
 
+/// @brief Measures views with a fresh output allocation on every solve
+void BM_SolveViewsFresh(benchmark::State &state,
+                        const std::string &dictionary_file) {
+  const auto &data = GetData(dictionary_file);
+  if (!data.dictionary) {
+    state.SkipWithError("Could not load " + dictionary_file);
+    return;
+  }
+  BoggleSolver solver(data.trie);
+  size_t board_index = 0;
+  for (auto _ : state) {
+    std::vector<std::string_view> words;
+    solver.SolveInto(data.boards[board_index], words);
+    benchmark::DoNotOptimize(words);
+    board_index = (board_index + 1) % data.boards.size();
+  }
+  state.SetItemsProcessed(state.iterations());
+}
+
+/// @brief Retains output capacity, with no pre-reserve or untimed warm-up
+void BM_SolveViewsReused(benchmark::State &state,
+                         const std::string &dictionary_file) {
+  const auto &data = GetData(dictionary_file);
+  if (!data.dictionary) {
+    state.SkipWithError("Could not load " + dictionary_file);
+    return;
+  }
+  BoggleSolver solver(data.trie);
+  std::vector<std::string_view> words;
+  size_t board_index = 0;
+  for (auto _ : state) {
+    solver.SolveInto(data.boards[board_index], words);
+    benchmark::DoNotOptimize(words);
+    board_index = (board_index + 1) % data.boards.size();
+  }
+  state.SetItemsProcessed(state.iterations());
+}
+
 /// @brief Solves the same board on every iteration (the original benchmark,
 /// kept so results stay comparable with the optimisation history)
 void BM_SolveFixedBoard(benchmark::State &state,
@@ -105,6 +144,18 @@ BENCHMARK_CAPTURE(BM_SolveRandomBoards, basic_english_2000, SMALL_DICTIONARY)
 BENCHMARK_CAPTURE(BM_SolveRandomBoards, boggle_words_138735, LARGE_DICTIONARY)
     ->Repetitions(10)
     ->ReportAggregatesOnly(true);
+BENCHMARK_CAPTURE(BM_SolveViewsFresh, basic_english_2000, SMALL_DICTIONARY)
+    ->Repetitions(10)
+    ->ReportAggregatesOnly(true);
+BENCHMARK_CAPTURE(BM_SolveViewsFresh, boggle_words_138735, LARGE_DICTIONARY)
+    ->Repetitions(10)
+    ->ReportAggregatesOnly(true);
+BENCHMARK_CAPTURE(BM_SolveViewsReused, basic_english_2000, SMALL_DICTIONARY)
+    ->Repetitions(10)
+    ->ReportAggregatesOnly(true);
+BENCHMARK_CAPTURE(BM_SolveViewsReused, boggle_words_138735, LARGE_DICTIONARY)
+    ->Repetitions(10)
+    ->ReportAggregatesOnly(true);
 BENCHMARK_CAPTURE(BM_SolveFixedBoard, basic_english_2000, SMALL_DICTIONARY)
     ->Repetitions(10)
     ->ReportAggregatesOnly(true);
@@ -112,12 +163,14 @@ BENCHMARK_CAPTURE(BM_SolveFixedBoard, basic_english_2000, SMALL_DICTIONARY)
 // Throughput with one solver per hardware thread, all sharing one trie.
 // items_per_second is the total for all threads (boards solved per second).
 BENCHMARK_CAPTURE(BM_SolveRandomBoards, basic_english_2000, SMALL_DICTIONARY)
-    ->Threads(static_cast<int>(std::max(1U, std::thread::hardware_concurrency())))
+    ->Threads(static_cast<int>(std::max(1U,
+                                        std::thread::hardware_concurrency())))
     ->UseRealTime()
     ->Repetitions(10)
     ->ReportAggregatesOnly(true);
 BENCHMARK_CAPTURE(BM_SolveRandomBoards, boggle_words_138735, LARGE_DICTIONARY)
-    ->Threads(static_cast<int>(std::max(1U, std::thread::hardware_concurrency())))
+    ->Threads(static_cast<int>(std::max(1U,
+                                        std::thread::hardware_concurrency())))
     ->UseRealTime()
     ->Repetitions(10)
     ->ReportAggregatesOnly(true);

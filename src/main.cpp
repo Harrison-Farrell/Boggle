@@ -6,6 +6,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <vector>
 
@@ -36,13 +37,14 @@ void SolveBoard(BoggleSolver &solver, BoggleBoard &board) {
   board.Shuffle();
   board.PrintBoard();
 
-  auto start_time = high_resolution_clock::now().time_since_epoch().count();
-  auto found_words = solver.Solve(board.GetFlattenedBoard());
-  auto end_time = high_resolution_clock::now().time_since_epoch().count();
-  auto duration = end_time - start_time;
+  std::vector<std::string_view> found_words;
+  const auto start_time = steady_clock::now();
+  solver.SolveInto(board.GetFlattenedBoard(), found_words);
+  const auto elapsed =
+      duration<double, std::micro>(steady_clock::now() - start_time);
 
   std::cout << "\nFound " << found_words.size() << " words in "
-            << static_cast<double>(duration) / 1e3 << " us:\n";
+            << elapsed.count() << " us:\n";
   for (const auto &word : found_words) {
     std::cout << word << "\n";
   }
@@ -73,6 +75,7 @@ double TimeBoards(const std::shared_ptr<const CompactTrie> &trie,
       workers.emplace_back([&trie, &next_board, number_of_boards] {
         BoggleBoard board;
         BoggleSolver solver(trie);
+        std::vector<std::string_view> found_words;
         while (true) {
           const uint32_t first = next_board.fetch_add(chunk_size);
           if (first >= number_of_boards) {
@@ -81,8 +84,7 @@ double TimeBoards(const std::shared_ptr<const CompactTrie> &trie,
           const uint32_t last = std::min(first + chunk_size, number_of_boards);
           for (uint32_t i = first; i < last; ++i) {
             board.Shuffle();
-            [[maybe_unused]] auto found_words =
-                solver.Solve(board.GetFlattenedBoard());
+            solver.SolveInto(board.GetFlattenedBoard(), found_words);
           }
         }
       });
@@ -107,16 +109,14 @@ void SolveOneMillionBoards(const std::shared_ptr<const CompactTrie> &trie) {
 
   const auto report = [](const char *label, double seconds) {
     std::cout << label << ": solved " << number_of_boards << " boards in "
-              << seconds << " s, average "
-              << seconds / number_of_boards * 1e6
+              << seconds << " s, average " << seconds / number_of_boards * 1e6
               << " us per board to shuffle & solve\n";
   };
 
   const double single_seconds = TimeBoards(trie, number_of_boards, 1);
   report("1 thread  ", single_seconds);
 
-  const double multi_seconds =
-      TimeBoards(trie, number_of_boards, thread_count);
+  const double multi_seconds = TimeBoards(trie, number_of_boards, thread_count);
   const std::string label = std::to_string(thread_count) + " threads";
   report(label.c_str(), multi_seconds);
 
