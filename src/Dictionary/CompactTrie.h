@@ -45,8 +45,15 @@ public:
     if (!(node.mask & letter_bit)) {
       return -1;
     }
+    return GetKnownChildIndex(node_index, letter_bit - 1);
+  }
+
+  /// @pre The child exists and lower_letters contains exactly the bits below
+  /// its letter. Children are stored in ascending letter order.
+  int32_t GetKnownChildIndex(int32_t node_index, uint32_t lower_letters) const {
+    const Node node = nodes_[node_index];
     return static_cast<int32_t>(node.first_child +
-                                std::popcount(node.mask & (letter_bit - 1)));
+                                std::popcount(node.mask & lower_letters));
   }
 
   /// @brief Checks if a node ends a word of at least `min_word_length` letters

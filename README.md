@@ -216,6 +216,19 @@ Set-Location build/bin/benchmark/Release
 
 Validation: all 36 Release tests passed, including comparison of both APIs against the independent search across 128 boards. Added checks cover output order, capacity reuse, clearing stale results, null tries, and views borrowing trie text across later solves and solver destruction while a shared trie remains alive. All 10 solver tests also passed with baseline x86-64 compilation without SSSE3. The console example and its million-board challenge completed successfully.
 
+### Round 5 — Direct lookup after letter filtering
+
+The SSSE3 filter already confirms that each surviving neighbour has a child in the current trie node. During board preparation, the solver now builds a mask for each cell containing all letters alphabetically before its letter. During search, a `popcount` counts how many children precede that letter, giving its offset in the sorted child array. This removes a membership check from every filtered transition.
+
+| Dictionary | Baseline (`aaa1710`) | Direct lookup | Solve time reduction |
+|:---|---:|---:|---:|
+| 2,000 words | 1,604 ns | 1,412 ns | 12.0% |
+| 138,735 words | 6,743 ns | 6,317 ns | 6.3% |
+
+`BM_SolveViewsFresh` measured elapsed time per board with a prepared solver and a fresh output vector. Both Release builds ran on one thread pinned to logical CPU 2 and cycled through the same 4,096 boards (seed 2024). Each figure is the median of four run medians, with 10 repetitions per run. Direct lookup was faster in all four pairs for both dictionaries. [Recorded benchmark results](benchmark/results/known_child_2026-11-25.json)
+
+All 36 Release tests passed. Across all 4,096 boards with each dictionary, both solve APIs returned the same words in the same order as the baseline. The scalar fallback also matched.
+
 ---
 
 ## Resources

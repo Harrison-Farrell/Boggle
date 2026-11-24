@@ -78,6 +78,7 @@ void BoggleSolver::SolveImpl(const std::array<char, BOARD_SIZE> &board,
   // tests the letter's bit. Invalid cells have a zero bit and never match.
   std::array<uint8_t, BOARD_SIZE> letter_bytes{};
   std::array<uint8_t, BOARD_SIZE> letter_bits{};
+  std::array<uint32_t, BOARD_SIZE> lower_letters{};
 #endif
   for (uint32_t cell = 0; cell < BOARD_SIZE; ++cell) {
     const int upper = std::toupper(static_cast<unsigned char>(board[cell]));
@@ -88,6 +89,7 @@ void BoggleSolver::SolveImpl(const std::array<char, BOARD_SIZE> &board,
     if (letters[cell] != CompactTrie::INVALID_LETTER) {
       letter_bytes[cell] = static_cast<uint8_t>(letters[cell] / 8);
       letter_bits[cell] = static_cast<uint8_t>(1U << (letters[cell] % 8));
+      lower_letters[cell] = (1U << letters[cell]) - 1;
     }
 #endif
   }
@@ -137,11 +139,17 @@ void BoggleSolver::SolveImpl(const std::array<char, BOARD_SIZE> &board,
     while (bitmask > 0) {
       const auto next_index = static_cast<uint32_t>(std::countr_zero(bitmask));
 
+#if defined(__SSSE3__)
+      // The cell survived the child-letter filter, so its edge exists.
+      self(next_index, visited_mask,
+           trie.GetKnownChildIndex(current_node_index, lower_letters[next_index]));
+#else
       const int32_t next_node =
           trie.GetNextNodeIndex(current_node_index, letters[next_index]);
       if (next_node != -1) {
         self(next_index, visited_mask, next_node);
       }
+#endif
 
       // Clear the lowest set bit
       bitmask &= (bitmask - 1);
