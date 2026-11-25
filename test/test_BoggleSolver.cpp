@@ -271,6 +271,32 @@ TEST(BoggleSolverLogicTest, CellsThatAreNotLettersAreSkipped) {
   EXPECT_EQ(solver.Solve(board), std::vector<std::string>{"TEA"});
 }
 
+TEST(BoggleSolverLogicTest, OnlyAsciiLettersOfAnyCaseAreLetters) {
+  auto dict = std::make_shared<Dictionary>();
+  for (char letter = 'A'; letter <= 'Z'; ++letter) {
+    dict->Insert(std::string("CA") + letter);
+  }
+  BoggleSolver solver(dict);
+
+  // Every byte value in the third cell, after "CA"
+  for (int byte = 0; byte < 256; ++byte) {
+    std::array<char, BOARD_SIZE> board{};
+    board.fill(static_cast<char>(byte));
+    board[0] = 'C';
+    board[1] = 'A';
+
+    std::vector<std::string> expected;
+    if (std::isalpha(byte) != 0) {
+      expected.push_back(std::string("CA") +
+                         static_cast<char>(std::toupper(byte)));
+      if (std::toupper(byte) == 'Q') {
+        expected.clear(); // "CAQU" is not in the dictionary
+      }
+    }
+    EXPECT_EQ(solver.Solve(board), expected) << "byte " << byte;
+  }
+}
+
 TEST(BoggleSolverLogicTest, NullDictionaryFindsNothing) {
   BoggleSolver solver(std::shared_ptr<Dictionary>{});
   std::array<char, BOARD_SIZE> board{};

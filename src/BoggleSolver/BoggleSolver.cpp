@@ -3,7 +3,6 @@
 // system includes
 #include <array>
 #include <bit>
-#include <cctype>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -92,10 +91,13 @@ void BoggleSolver::SolveImpl(const std::array<char, BOARD_SIZE> &board,
   std::array<uint8_t, BOARD_SIZE> letter_bits{};
 #endif
   for (uint32_t cell = 0; cell < BOARD_SIZE; ++cell) {
-    const int upper = std::toupper(static_cast<unsigned char>(board[cell]));
-    letters[cell] = (upper >= 'A' && upper <= 'Z')
-                        ? static_cast<uint32_t>(upper - 'A')
-                        : CompactTrie::INVALID_LETTER;
+    // ASCII upper and lower case letters differ only in bit 5, so clearing it
+    // upper-cases a letter. Only letters land in 'A'..'Z' afterwards. This
+    // replaces std::toupper, which is a C runtime call that checks the locale.
+    const uint32_t letter =
+        (static_cast<unsigned char>(board[cell]) & ~0x20U) - 'A';
+    letters[cell] =
+        letter < Dictionary::ALPHABET_SIZE ? letter : CompactTrie::INVALID_LETTER;
     if (letters[cell] != CompactTrie::INVALID_LETTER) {
       lower_letters[cell] = (1U << letters[cell]) - 1;
 #if defined(__SSSE3__)

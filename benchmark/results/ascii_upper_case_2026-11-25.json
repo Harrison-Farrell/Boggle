@@ -1,0 +1,186 @@
+{
+  "baseline_commit": "2ec3dbbf7c26b94f24febfb6d636489d6913e0a9",
+  "benchmarks": [
+    "BM_SolveViewsFresh",
+    "BM_SolveViewsReused"
+  ],
+  "configuration": "Windows Release, -O3 -march=native, SSSE3 enabled in both builds",
+  "scope": "Prepared solver, single thread pinned to logical CPU 2; Fresh = new output vector per solve, Reused = output vector kept between solves",
+  "board_seed": 2024,
+  "board_count": 4096,
+  "repetitions_per_run": 10,
+  "random_interleaving": true,
+  "minimum_benchmark_time_seconds": 0.5,
+  "run_order": [
+    "before1",
+    "after1",
+    "after2",
+    "before2",
+    "before3",
+    "after3",
+    "after4",
+    "before4"
+  ],
+  "results": {
+    "BM_SolveViewsFresh/basic_english_2000": {
+      "run_medians": {
+        "before1": {
+          "elapsed_ns": 900.43,
+          "cpu_ns": 857.98
+        },
+        "after1": {
+          "elapsed_ns": 859.36,
+          "cpu_ns": 828.33
+        },
+        "after2": {
+          "elapsed_ns": 864.27,
+          "cpu_ns": 826.59
+        },
+        "before2": {
+          "elapsed_ns": 899.66,
+          "cpu_ns": 847.52
+        },
+        "before3": {
+          "elapsed_ns": 882.52,
+          "cpu_ns": 863.21
+        },
+        "after3": {
+          "elapsed_ns": 861.71,
+          "cpu_ns": 837.05
+        },
+        "after4": {
+          "elapsed_ns": 855.63,
+          "cpu_ns": 837.05
+        },
+        "before4": {
+          "elapsed_ns": 903.14,
+          "cpu_ns": 871.93
+        }
+      },
+      "before_elapsed_ns": 900.05,
+      "after_elapsed_ns": 860.54,
+      "latency_reduction_percent": 4.39,
+      "speed_up": 1.05
+    },
+    "BM_SolveViewsFresh/boggle_words_138735": {
+      "run_medians": {
+        "before1": {
+          "elapsed_ns": 3636.25,
+          "cpu_ns": 3489.46
+        },
+        "after1": {
+          "elapsed_ns": 3667.94,
+          "cpu_ns": 3515.62
+        },
+        "after2": {
+          "elapsed_ns": 3680.66,
+          "cpu_ns": 3489.46
+        },
+        "before2": {
+          "elapsed_ns": 3765.15,
+          "cpu_ns": 3569.68
+        },
+        "before3": {
+          "elapsed_ns": 3670.23,
+          "cpu_ns": 3529.57
+        },
+        "after3": {
+          "elapsed_ns": 3650.11,
+          "cpu_ns": 3449.35
+        },
+        "after4": {
+          "elapsed_ns": 3656.09,
+          "cpu_ns": 3529.58
+        },
+        "before4": {
+          "elapsed_ns": 3651.72,
+          "cpu_ns": 3529.57
+        }
+      },
+      "before_elapsed_ns": 3660.97,
+      "after_elapsed_ns": 3662.02,
+      "latency_reduction_percent": -0.03,
+      "speed_up": 1.0
+    },
+    "BM_SolveViewsReused/basic_english_2000": {
+      "run_medians": {
+        "before1": {
+          "elapsed_ns": 822.81,
+          "cpu_ns": 810.9
+        },
+        "after1": {
+          "elapsed_ns": 811.69,
+          "cpu_ns": 767.3
+        },
+        "after2": {
+          "elapsed_ns": 798.59,
+          "cpu_ns": 767.3
+        },
+        "before2": {
+          "elapsed_ns": 828.47,
+          "cpu_ns": 793.46
+        },
+        "before3": {
+          "elapsed_ns": 830.03,
+          "cpu_ns": 795.2
+        },
+        "after3": {
+          "elapsed_ns": 801.41,
+          "cpu_ns": 784.74
+        },
+        "after4": {
+          "elapsed_ns": 796.22,
+          "cpu_ns": 753.35
+        },
+        "before4": {
+          "elapsed_ns": 832.99,
+          "cpu_ns": 793.46
+        }
+      },
+      "before_elapsed_ns": 829.25,
+      "after_elapsed_ns": 800.0,
+      "latency_reduction_percent": 3.53,
+      "speed_up": 1.04
+    },
+    "BM_SolveViewsReused/boggle_words_138735": {
+      "run_medians": {
+        "before1": {
+          "elapsed_ns": 3521.03,
+          "cpu_ns": 3414.49
+        },
+        "after1": {
+          "elapsed_ns": 3559.26,
+          "cpu_ns": 3337.76
+        },
+        "after2": {
+          "elapsed_ns": 3515.67,
+          "cpu_ns": 3405.77
+        },
+        "before2": {
+          "elapsed_ns": 3578.48,
+          "cpu_ns": 3417.97
+        },
+        "before3": {
+          "elapsed_ns": 3509.57,
+          "cpu_ns": 3383.09
+        },
+        "after3": {
+          "elapsed_ns": 3532.72,
+          "cpu_ns": 3449.35
+        },
+        "after4": {
+          "elapsed_ns": 3496.41,
+          "cpu_ns": 3405.77
+        },
+        "before4": {
+          "elapsed_ns": 3520.89,
+          "cpu_ns": 3369.15
+        }
+      },
+      "before_elapsed_ns": 3520.96,
+      "after_elapsed_ns": 3524.2,
+      "latency_reduction_percent": -0.09,
+      "speed_up": 1.0
+    }
+  }
+}

@@ -267,6 +267,32 @@ The fresh-buffer gain is larger mainly because the output vector is now sized on
 
 All 38 Release tests passed. The sorted words for the same 8,195 boards matched the Round 5 solver with both dictionaries, in the SSSE3 and scalar builds. Each board was solved twice in a row, checking that the found-word bits are cleared between solves.
 
+### Round 8 — ASCII upper-casing without `std::toupper`
+
+Board letters were upper-cased with `std::toupper`, which on Windows is a C runtime call that checks the locale, once for each of the 16 cells. ASCII upper and lower case letters differ only in bit 5, so the solver now clears that bit and checks the result is in `'A'..'Z'`. Only letters land in that range, so every other byte still maps to the letter that never has a child. A new test checks all 256 byte values.
+
+| Benchmark | Dictionary | Baseline (`2ec3dbb`) | ASCII upper-casing | Solve time reduction |
+|:---|:---|---:|---:|---:|
+| `BM_SolveViewsReused` | 2,000 words | 829 ns | 800 ns | 3.5% |
+| `BM_SolveViewsReused` | 138,735 words | 3,521 ns | 3,524 ns | none measured |
+| `BM_SolveViewsFresh` | 2,000 words | 900 ns | 861 ns | 4.4% |
+| `BM_SolveViewsFresh` | 138,735 words | 3,661 ns | 3,662 ns | none measured |
+
+This saves about 30 ns per board, which is within run-to-run variation for the large dictionary. Measured as in Round 6. [Recorded benchmark results](benchmark/results/ascii_upper_case_2026-11-25.json)
+
+**Rounds 6 to 8 together**, measured directly against the Round 5 solver (`bbeb6ed`) in the same way:
+
+| Benchmark | Dictionary | Round 5 | Round 8 | Speed-up |
+|:---|:---|---:|---:|---:|
+| `BM_SolveViewsReused` | 2,000 words | 1,183 ns | 804 ns | 1.47x |
+| `BM_SolveViewsReused` | 138,735 words | 5,818 ns | 3,579 ns | 1.63x |
+| `BM_SolveViewsFresh` | 2,000 words | 1,559 ns | 862 ns | 1.81x |
+| `BM_SolveViewsFresh` | 138,735 words | 6,621 ns | 3,727 ns | 1.78x |
+
+[Recorded benchmark results](benchmark/results/rounds_6_to_8_2026-11-25.json)
+
+All 39 Release tests passed, and the sorted words for the 8,195 test boards still matched the Round 5 solver with both dictionaries, in the SSSE3 and scalar builds.
+
 ---
 
 ## Resources
