@@ -68,7 +68,7 @@ public:
 
   /// @brief Checks if a node ends a word of at least `min_word_length` letters
   bool IsWord(int32_t node_index) const {
-    return (nodes_[node_index].mask & WORD_BIT) != 0;
+    return (nodes_[node_index].mask & END_OF_WORD_BIT) != 0;
   }
 
   /// @brief Checks if any longer word continues from this node
@@ -96,7 +96,7 @@ public:
   size_t GetTotalWords() const { return total_words_; }
 
 private:
-  static constexpr uint32_t WORD_BIT = 1U << 31;
+  static constexpr uint32_t END_OF_WORD_BIT = 1U << 31;
   static constexpr uint32_t CHILDREN_MASK =
       (1U << Dictionary::ALPHABET_SIZE) - 1;
 

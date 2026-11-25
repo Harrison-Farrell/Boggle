@@ -61,7 +61,7 @@ CompactTrie::CompactTrie(const Dictionary &dictionary,
     }
 
     if (dictionary.IsWord(current.source) && current.depth >= min_word_length) {
-      node.mask |= WORD_BIT;
+      node.mask |= END_OF_WORD_BIT;
     }
     nodes_.push_back(node);
   }
@@ -70,7 +70,7 @@ CompactTrie::CompactTrie(const Dictionary &dictionary,
   word_spans_.resize(nodes_.size());
   std::string word;
   for (size_t index = 0; index < nodes_.size(); ++index) {
-    if (!(nodes_[index].mask & WORD_BIT)) {
+    if (!(nodes_[index].mask & END_OF_WORD_BIT)) {
       continue;
     }
     word.clear();
