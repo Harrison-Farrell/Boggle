@@ -142,11 +142,15 @@ private:
   std::vector<PathState> level_;
   std::vector<PathState> next_level_;
 
-  // Unique identifier each board to track found words (stop duplicates)
-  uint32_t solve_id_ = 0;
+  // One bit per trie node, set once its word is found on the current board
+  // so a word reached by two paths is listed once. Only the bits of found
+  // words are set, and they are cleared at the end of each solve.
+  std::vector<uint64_t> found_word_bits_;
 
-  // Tracks each node index & sets the solve id (stops duplicate words)
-  std::vector<uint32_t> word_has_been_found_;
+  // Trie nodes of the words found on the current board, in the order found.
+  // One entry per dictionary word, plus one because a slot is written for
+  // every word node visited, whether or not it is new.
+  std::vector<uint32_t> found_word_nodes_;
 };
 
 #endif // BOGGLE_SOLVER_H

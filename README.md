@@ -248,6 +248,25 @@ Both Release builds ran on one thread pinned to logical CPU 2, alternating basel
 
 All 37 Release tests passed. For 8,195 boards (the 4,096 seeded boards, each again with a lower-case and two invalid cells, plus three special boards) and both dictionaries, the sorted words matched the baseline, in both the SSSE3 build and a baseline x86-64 build that uses the scalar fallback.
 
+### Round 7 — Found-word bits, and word text looked up after the search
+
+To list each word once, the solver kept a 4-byte solve number for every trie node (1.7 MB for the 138,735-word trie) and looked up the word's text as soon as it was found (in a 3.4 MB array, also indexed by node). Both reads land at random places in large arrays, and happened in the middle of the search where each cache miss was paid in turn.
+
+- Found words are now marked in one bit per trie node (53 KB for the large trie). After the search only the 64-bit blocks holding found words are cleared, so nothing is reset per board and the solve-number wrap-around is gone.
+- A new word is recorded without a branch: the node is always written to a buffer of found nodes, and the count only moves on when the node ends a word that has not been found yet. `CompactTrie::GetTotalWords()` sizes that buffer.
+- The text of each word is looked up after the search, in one simple loop whose reads do not depend on each other. The output vector is reserved once for the number of words found.
+
+| Benchmark | Dictionary | Baseline (`24da2af`) | Found-word bits | Solve time reduction |
+|:---|:---|---:|---:|---:|
+| `BM_SolveViewsReused` | 2,000 words | 901 ns | 833 ns | 7.5% |
+| `BM_SolveViewsReused` | 138,735 words | 4,166 ns | 3,598 ns | 13.6% |
+| `BM_SolveViewsFresh` | 2,000 words | 1,275 ns | 899 ns | 29.5% |
+| `BM_SolveViewsFresh` | 138,735 words | 5,009 ns | 3,702 ns | 26.1% |
+
+The fresh-buffer gain is larger mainly because the output vector is now sized once instead of growing several times per solve. Measured as in Round 6 (ABBAABBA, pinned to logical CPU 2, median of four run medians). [Recorded benchmark results](benchmark/results/found_word_bits_2026-11-25.json)
+
+All 38 Release tests passed. The sorted words for the same 8,195 boards matched the Round 5 solver with both dictionaries, in the SSSE3 and scalar builds. Each board was solved twice in a row, checking that the found-word bits are cleared between solves.
+
 ---
 
 ## Resources

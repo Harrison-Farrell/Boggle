@@ -92,6 +92,9 @@ public:
   /// @brief Gets the total number of nodes
   size_t GetTotalNodes() const { return nodes_.size(); }
 
+  /// @brief Gets the number of nodes marked as words
+  size_t GetTotalWords() const { return total_words_; }
+
 private:
   static constexpr uint32_t WORD_BIT = 1U << 31;
   static constexpr uint32_t CHILDREN_MASK =
@@ -110,6 +113,7 @@ private:
   };
 
   std::vector<Node> nodes_;
+  size_t total_words_ = 0;
 
   // Words are only read when found, so they are kept out of the node array
   std::string word_text_;

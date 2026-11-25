@@ -1,7 +1,6 @@
 #include "BoggleSolver.h"
 
 // system includes
-#include <algorithm>
 #include <array>
 #include <bit>
 #include <cctype>
@@ -26,7 +25,8 @@ BoggleSolver::BoggleSolver(const std::shared_ptr<Dictionary> &dictionary)
 BoggleSolver::BoggleSolver(std::shared_ptr<const CompactTrie> trie)
     : trie_(std::move(trie)) {
   if (trie_) {
-    word_has_been_found_.resize(trie_->GetTotalNodes(), 0);
+    found_word_bits_.resize((trie_->GetTotalNodes() + 63) / 64, 0);
+    found_word_nodes_.resize(trie_->GetTotalWords() + 1);
   }
 }
 
@@ -77,17 +77,6 @@ void BoggleSolver::SolveImpl(const std::array<char, BOARD_SIZE> &board,
     return;
   }
   const CompactTrie &trie = *trie_;
-
-  // Enables tracking of words found on this specific board
-  // This is used to prevent finding the same word twice
-  // Can call `Solve(board)` on many boards and it will still work
-  // as the solve_id_ increments for each board
-  solve_id_++;
-  if (solve_id_ == 0) [[unlikely]] {
-    // Reset tracking on wrap-around (unsigned int)
-    std::ranges::fill(word_has_been_found_, 0);
-    solve_id_ = 1;
-  }
 
   // Convert the board to letter indices once. Anything that is not a letter
   // maps to a letter that never has a child, so it can never be part of a word.
@@ -156,6 +145,7 @@ void BoggleSolver::SolveImpl(const std::array<char, BOARD_SIZE> &board,
   const uint32_t root_children = trie.GetChildrenMask(root);
   const uint32_t root_first_child = trie.GetFirstChildIndex(root);
 
+  size_t found_count = 0;
   if (level_.size() < BOARD_SIZE) {
     level_.resize(BOARD_SIZE);
   }
@@ -176,6 +166,8 @@ void BoggleSolver::SolveImpl(const std::array<char, BOARD_SIZE> &board,
     const PathState *paths = level_.data();
     PathState *next_paths = next_level_.data();
     size_t next_size = 0;
+    uint64_t *found_bits = found_word_bits_.data();
+    uint32_t *found_nodes = found_word_nodes_.data();
 
     for (size_t path_index = 0; path_index < level_size; ++path_index) {
       const PathState path = paths[path_index];
@@ -183,11 +175,16 @@ void BoggleSolver::SolveImpl(const std::array<char, BOARD_SIZE> &board,
       const uint32_t children = trie.GetChildrenMask(node);
       const uint32_t first_child = trie.GetFirstChildIndex(node);
 
-      if (trie.IsWord(node) && word_has_been_found_[node] != solve_id_) {
-        // mark the word as found for this board
-        word_has_been_found_[node] = solve_id_;
-        found_words.emplace_back(trie.GetWord(node));
-      }
+      // Record a new word without branching: between one in eight and one in
+      // four visited nodes end a word, which the CPU cannot predict. The node
+      // is always written, and the count only moves on for a new word.
+      uint64_t &bits = found_bits[path.node / 64];
+      const uint64_t node_bit = uint64_t{1} << (path.node % 64);
+      const uint64_t is_new_word =
+          static_cast<uint64_t>(trie.IsWord(node)) & ((bits & node_bit) == 0);
+      found_nodes[found_count] = path.node;
+      found_count += is_new_word;
+      bits |= node_bit & (0 - is_new_word);
 
       // Unused neighbours whose letter continues the prefix
       const uint32_t keep = ADJACENT_CELLS[path.cell] & INDEX_MASK &
@@ -203,5 +200,16 @@ void BoggleSolver::SolveImpl(const std::array<char, BOARD_SIZE> &board,
 
     std::swap(level_, next_level_);
     level_size = next_size;
+  }
+
+  // Look up the text of the found words now rather than during the search.
+  // These reads are spread across large arrays, and here they do not depend
+  // on each other, so the CPU can wait on several cache misses at once.
+  found_words.reserve(found_count);
+  for (size_t index = 0; index < found_count; ++index) {
+    const uint32_t node = found_word_nodes_[index];
+    found_words.emplace_back(trie.GetWord(static_cast<int32_t>(node)));
+    // Every set bit belongs to a found word, so clear its whole 64-bit block
+    found_word_bits_[node / 64] = 0;
   }
 }

@@ -118,6 +118,7 @@ TEST(CompactTrieTest, EmptyDictionary) {
   const CompactTrie trie(dictionary);
 
   EXPECT_EQ(trie.GetTotalNodes(), 1U);
+  EXPECT_EQ(trie.GetTotalWords(), 0U);
   EXPECT_FALSE(trie.HasChildren(CompactTrie::GetRootIndex()));
 }
 
@@ -138,4 +139,15 @@ TEST(CompactTrieTest, FirstChildPlusLowerLettersFindsEachChild) {
               trie.GetNextNodeIndex(ca, static_cast<uint32_t>(letter - 'A')))
         << letter;
   }
+}
+
+TEST(CompactTrieTest, CountsOnlyMarkedWords) {
+  Dictionary dictionary;
+  dictionary.Insert("AT");   // too short
+  dictionary.Insert("ATE");
+  dictionary.Insert("QAT");  // Q without U is dropped
+  dictionary.Insert("QUIT");
+  const CompactTrie trie(dictionary, 3);
+
+  EXPECT_EQ(trie.GetTotalWords(), 2U);
 }

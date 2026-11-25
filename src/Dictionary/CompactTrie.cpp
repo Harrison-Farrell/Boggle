@@ -83,6 +83,7 @@ CompactTrie::CompactTrie(const Dictionary &dictionary,
     }
     std::ranges::reverse(word);
 
+    ++total_words_;
     word_spans_[index] = {static_cast<uint32_t>(word_text_.size()),
                           static_cast<uint32_t>(word.size())};
     word_text_ += word;
