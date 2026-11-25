@@ -34,7 +34,7 @@ The solver is divided into three primary components:
 - **Dictionary**: A Trie structure optimized with a vector-based allocation to ensure contiguous memory layout. Words can be inserted at any time.
 - **CompactTrie**: A read-only copy of the Dictionary built for solving. Nodes are 8 bytes with their children stored next to each other, and the Boggle rules ("Q" reads as "QU", words need 3+ letters) are folded in when it is built. One copy can be shared by solvers on several threads.
 - **BoggleBoard**: Mimics standard die configurations; handles random shuffling and ASCII output. Can be seeded for a reproducible sequence of boards.
-- **BoggleSolver**: Core search engine employing recursive DFS with a bitmask of visited cells and precomputed neighbour lookups. On SSSE3 targets, board letter masks filter out neighbours that cannot extend the current dictionary prefix before the search loop. Results can be returned as owned strings or written into a reusable buffer of views into the trie text.
+- **BoggleSolver**: Core search engine. It grows every path on the board by one cell per pass (breadth first), using a bitmask of visited cells and precomputed neighbour lookups, and writes the next paths without branching on how many neighbours match. On SSSE3 targets, board letter masks filter out neighbours that cannot extend the current dictionary prefix before the search loop. Results can be returned as owned strings or written into a reusable buffer of views into the trie text.
 
 ---
 
@@ -228,6 +228,25 @@ The SSSE3 filter already confirms that each surviving neighbour has a child in t
 `BM_SolveViewsFresh` measured elapsed time per board with a prepared solver and a fresh output vector. Both Release builds ran on one thread pinned to logical CPU 2 and cycled through the same 4,096 boards (seed 2024). Each figure is the median of four run medians, with 10 repetitions per run. Direct lookup was faster in all four pairs for both dictionaries. [Recorded benchmark results](benchmark/results/known_child_2026-11-25.json)
 
 All 36 Release tests passed. Across all 4,096 boards with each dictionary, both solve APIs returned the same words in the same order as the baseline. The scalar fallback also matched.
+
+### Round 6 — Search one path length at a time
+
+Counting the work showed that each trie node visited cost about 50 CPU cycles, even with the 2,000-word trie (54 KB) entirely in cache. Most of that was the CPU mispredicting how many neighbours of a cell continue the prefix, which differs at every step of a depth-first search.
+
+The search now grows all paths by one cell per pass instead of following each path to its end. The paths of one length are kept in a flat array of `{trie node, last cell, visited cells}`. Each path writes a candidate into all eight neighbour slots and moves the write position forward only for neighbours that continue the prefix (`next_size += (keep >> cell) & 1`), so there is no branch on the neighbour count. Corner and edge cells pad their neighbour list with a cell that never matches. Within a pass, trie reads do not depend on each other, so the CPU can overlap their cache misses. The two path arrays are kept in the solver between solves.
+
+Words are now returned shortest path first, rather than in depth-first order. `Solve` and `SolveInto` still return the same order, and the set of words found is unchanged.
+
+| Benchmark | Dictionary | Baseline (`bbeb6ed`) | Level by level | Solve time reduction |
+|:---|:---|---:|---:|---:|
+| `BM_SolveViewsReused` | 2,000 words | 1,182 ns | 890 ns | 24.7% |
+| `BM_SolveViewsReused` | 138,735 words | 5,761 ns | 4,129 ns | 28.3% |
+| `BM_SolveViewsFresh` | 2,000 words | 1,570 ns | 1,269 ns | 19.1% |
+| `BM_SolveViewsFresh` | 138,735 words | 6,593 ns | 4,957 ns | 24.8% |
+
+Both Release builds ran on one thread pinned to logical CPU 2, alternating baseline and new builds in the order ABBAABBA, with 10 randomly interleaved repetitions of at least 0.5 seconds per run. Each figure is the median of four run medians of elapsed time per board over the same 4,096 boards (seed 2024). [Recorded benchmark results](benchmark/results/level_search_2026-11-25.json)
+
+All 37 Release tests passed. For 8,195 boards (the 4,096 seeded boards, each again with a lower-case and two invalid cells, plus three special boards) and both dictionaries, the sorted words matched the baseline, in both the SSSE3 build and a baseline x86-64 build that uses the scalar fallback.
 
 ---
 

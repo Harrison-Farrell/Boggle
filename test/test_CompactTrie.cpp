@@ -1,4 +1,5 @@
 // system includes
+#include <bit>
 #include <cstdint>
 #include <string>
 #include <string_view>
@@ -118,4 +119,23 @@ TEST(CompactTrieTest, EmptyDictionary) {
 
   EXPECT_EQ(trie.GetTotalNodes(), 1U);
   EXPECT_FALSE(trie.HasChildren(CompactTrie::GetRootIndex()));
+}
+
+TEST(CompactTrieTest, FirstChildPlusLowerLettersFindsEachChild) {
+  Dictionary dictionary;
+  dictionary.Insert("CAB");
+  dictionary.Insert("CAN");
+  dictionary.Insert("CAT");
+  const CompactTrie trie(dictionary);
+
+  const int32_t ca = Walk(trie, "CA");
+  ASSERT_NE(ca, -1);
+  const uint32_t children = trie.GetChildrenMask(ca);
+  const uint32_t first = trie.GetFirstChildIndex(ca);
+  for (const char letter : {'B', 'N', 'T'}) {
+    const uint32_t lower = (1U << static_cast<uint32_t>(letter - 'A')) - 1;
+    EXPECT_EQ(static_cast<int32_t>(first + std::popcount(children & lower)),
+              trie.GetNextNodeIndex(ca, static_cast<uint32_t>(letter - 'A')))
+        << letter;
+  }
 }

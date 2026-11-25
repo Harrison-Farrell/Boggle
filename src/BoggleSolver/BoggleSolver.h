@@ -93,7 +93,8 @@ public:
 
   /// @brief Returns owned words of at least 3 letters on the board
   /// @param board Flattened 1D boggle board
-  /// @return A vector of words found on the board
+  /// @return A vector of words found on the board. Words made from fewer
+  /// cells come first; Solve and SolveInto return the same order.
   std::vector<std::string> Solve(const std::array<char, BOARD_SIZE> &board);
 
   /// @brief Writes word views into a caller-owned buffer, retaining its
@@ -126,8 +127,20 @@ private:
   void SolveImpl(const std::array<char, BOARD_SIZE> &board,
                  std::vector<Word> &found_words);
 
+  // A path on the board that spells a prefix in the trie
+  struct PathState {
+    uint32_t node;    // trie node for the prefix the path spells
+    uint32_t cell;    // last cell of the path
+    uint32_t visited; // bitmask of the cells on the path, including `cell`
+  };
+
   // Read-only, so one trie can be shared by solvers on several threads
   std::shared_ptr<const CompactTrie> trie_;
+
+  // Paths of the current length, and the paths one cell longer built from
+  // them. Kept between solves so their capacity is reused.
+  std::vector<PathState> level_;
+  std::vector<PathState> next_level_;
 
   // Unique identifier each board to track found words (stop duplicates)
   uint32_t solve_id_ = 0;

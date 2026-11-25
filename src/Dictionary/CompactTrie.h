@@ -56,6 +56,16 @@ public:
                                 std::popcount(node.mask & lower_letters));
   }
 
+  /// @brief Gets the index of the child for the lowest letter of a node
+  /// @details The child for a letter is this index plus the number of child
+  /// letters below it. Lets a caller read a node once and find several
+  /// children without reading the node again.
+  /// @param node_index A valid node index
+  /// @return Index of the first child (meaningless when there are no children)
+  uint32_t GetFirstChildIndex(int32_t node_index) const {
+    return nodes_[node_index].first_child;
+  }
+
   /// @brief Checks if a node ends a word of at least `min_word_length` letters
   bool IsWord(int32_t node_index) const {
     return (nodes_[node_index].mask & WORD_BIT) != 0;
