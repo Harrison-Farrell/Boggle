@@ -127,11 +127,12 @@ private:
   void SolveImpl(const std::array<char, BOARD_SIZE> &board,
                  std::vector<Word> &found_words);
 
-  // A path on the board that spells a prefix in the trie
+  // A path on the board that spells a prefix in the trie.
+  // Packed into 8 bytes so each candidate write is a single 64-bit store.
   struct PathState {
     uint32_t node;    // trie node for the prefix the path spells
-    uint32_t cell;    // last cell of the path
-    uint32_t visited; // bitmask of the cells on the path, including `cell`
+    uint16_t cell;    // last cell of the path (0..15)
+    uint16_t visited; // bitmask of the cells on the path, including `cell`
   };
 
   // Read-only, so one trie can be shared by solvers on several threads

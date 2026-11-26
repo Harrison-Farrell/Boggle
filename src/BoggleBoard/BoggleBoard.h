@@ -3,6 +3,7 @@
 
 // system includes
 #include <array>
+#include <bit>
 #include <cstdint>
 #include <random>
 #include <string_view>
@@ -57,16 +58,34 @@ public:
 
   /// @brief Returns the boggle board in a flattened 1D array
   /// @return array of 16 characters representing the board
-  std::array<char, BOARD_SIZE> GetFlattenedBoard() const;
+  std::array<char, BOARD_SIZE> GetFlattenedBoard() const {
+    return std::bit_cast<std::array<char, BOARD_SIZE>>(board_);
+  }
 
   /// @brief Print an ASCII representation of the board to standard output
   void PrintBoard() const;
 
 private:
-  static constexpr std::array<std::string_view, TOTAL_DICE> STANDARD_DICE = {
-      "AWOTOT", "BOAJBO", "HNZNHL", "ISTOES", "TSDIYT", "PSCAOH",
-      "TYTLRE", "ERXIDL", "FSAFPK", "QUIHNM", "SNEIUE", "AEANGE",
-      "RVTWEH", "TMUOIC", "WEENGH", "LYVRDE"};
+  // Stored as a flat 2D table (aligned to 8 bytes per die) rather than
+  // string_views to avoid pointer indirection on every die face lookup.
+  static constexpr std::array<std::array<char, 8>, TOTAL_DICE> STANDARD_DICE = {{
+      {'A', 'W', 'O', 'T', 'O', 'T', 0, 0},
+      {'B', 'O', 'A', 'J', 'B', 'O', 0, 0},
+      {'H', 'N', 'Z', 'N', 'H', 'L', 0, 0},
+      {'I', 'S', 'T', 'O', 'E', 'S', 0, 0},
+      {'T', 'S', 'D', 'I', 'Y', 'T', 0, 0},
+      {'P', 'S', 'C', 'A', 'O', 'H', 0, 0},
+      {'T', 'Y', 'T', 'L', 'R', 'E', 0, 0},
+      {'E', 'R', 'X', 'I', 'D', 'L', 0, 0},
+      {'F', 'S', 'A', 'F', 'P', 'K', 0, 0},
+      {'Q', 'U', 'I', 'H', 'N', 'M', 0, 0},
+      {'S', 'N', 'E', 'I', 'U', 'E', 0, 0},
+      {'A', 'E', 'A', 'N', 'G', 'E', 0, 0},
+      {'R', 'V', 'T', 'W', 'E', 'H', 0, 0},
+      {'T', 'M', 'U', 'O', 'I', 'C', 0, 0},
+      {'W', 'E', 'E', 'N', 'G', 'H', 0, 0},
+      {'L', 'Y', 'V', 'R', 'D', 'E', 0, 0},
+  }};
 
   // Seeded once on construction. Re-seeding on every shuffle is expensive.
   std::mt19937 generator_;

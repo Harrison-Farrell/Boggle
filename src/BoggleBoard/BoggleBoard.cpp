@@ -15,14 +15,36 @@ BoggleBoard::BoggleBoard(uint32_t seed) : generator_(seed) {
 }
 
 void BoggleBoard::Shuffle() {
-  std::shuffle(dice_order_.begin(), dice_order_.end(), generator_);
+  // Perform an in-place Fisher-Yates shuffle and select each die's face in a
+  // single pass. Each 32-bit RNG output supplies four 8-bit fixed-point
+  // multiplications (two die swaps and two face rolls), requiring only 8 RNG
+  // draws and zero integer divisions per board.
+  for (uint32_t i = TOTAL_DICE - 1; i >= 2; i -= 2) {
+    const uint32_t r = generator_();
 
-  std::uniform_int_distribution<uint32_t> dist(0, DICE_FACES - 1);
+    const uint32_t swap0 = ((r & 0xFFU) * (i + 1U)) >> 8;
+    const uint8_t die0 = dice_order_[swap0];
+    dice_order_[swap0] = dice_order_[i];
+    dice_order_[i] = die0;
+    const uint32_t face0 = (((r >> 8) & 0xFFU) * DICE_FACES) >> 8;
+    board_[i / BOARD_WIDTH][i % BOARD_WIDTH] = STANDARD_DICE[die0][face0];
 
-  for (uint32_t i = 0; i < TOTAL_DICE; ++i) {
-    const char face = STANDARD_DICE[dice_order_[i]][dist(generator_)];
-    board_[i / BOARD_WIDTH][i % BOARD_WIDTH] = face;
+    const uint32_t swap1 = (((r >> 16) & 0xFFU) * i) >> 8;
+    const uint8_t die1 = dice_order_[swap1];
+    dice_order_[swap1] = dice_order_[i - 1];
+    dice_order_[i - 1] = die1;
+    const uint32_t face1 = ((r >> 24) * DICE_FACES) >> 8;
+    board_[(i - 1) / BOARD_WIDTH][(i - 1) % BOARD_WIDTH] =
+        STANDARD_DICE[die1][face1];
   }
+  const uint32_t r = generator_();
+  const uint32_t swap1 = ((r & 0xFFU) * 2U) >> 8;
+  const uint8_t die1 = dice_order_[swap1];
+  dice_order_[swap1] = dice_order_[1];
+  dice_order_[1] = die1;
+  board_[0][1] = STANDARD_DICE[die1][(((r >> 8) & 0xFFU) * DICE_FACES) >> 8];
+  board_[0][0] =
+      STANDARD_DICE[dice_order_[0]][(((r >> 16) & 0xFFU) * DICE_FACES) >> 8];
 }
 
 char BoggleBoard::GetCharAtIndex(uint32_t row, uint32_t col) const {
@@ -30,17 +52,6 @@ char BoggleBoard::GetCharAtIndex(uint32_t row, uint32_t col) const {
     return board_[row][col];
   }
   return '\0';
-}
-
-std::array<char, BOARD_SIZE> BoggleBoard::GetFlattenedBoard() const {
-  std::array<char, BOARD_SIZE> flattened_board{};
-
-  for (uint32_t row = 0; row < BOARD_WIDTH; ++row) {
-    for (uint32_t col = 0; col < BOARD_HEIGHT; ++col) {
-      flattened_board[(row * BOARD_WIDTH) + col] = board_[row][col];
-    }
-  }
-  return flattened_board;
 }
 
 void BoggleBoard::PrintBoard() const {
