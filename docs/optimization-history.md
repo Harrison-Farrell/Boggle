@@ -4,6 +4,14 @@
 
 Historical measurements describe the implementation and test suite at each stage. See [benchmarking](benchmarking.md) for current benchmark modes and interpretation.
 
+## Visual summary of optimization methods
+
+![System architecture, memory layout, and multi-thread pipeline](../images/system_architecture.svg)
+
+![Single-board search pipeline and inner-loop optimizations](../images/search_pipeline.svg)
+
+![Step-by-step single-board solve walkthrough](../images/single_board_step_by_step.svg)
+
 - The benchmarks have been ran on a Windows 11 machine with an 13th Gen Intel(R) Core(TM) i9-13900HX (2.20 GHz).
 - The benchmarks ran use the `basic_english_words_2000.txt` word list file to build the dictionary (hard-coded).
 - The benchmarks repeats the benchmark fixture 50 times to determine the mean time.
@@ -177,3 +185,43 @@ This saves about 30 ns per board, which is within run-to-run variation for the l
 [Recorded benchmark results](../benchmark/results/rounds_6_to_8_2026-11-25.json)
 
 All 39 Release tests passed, and the sorted words for the 8,195 test boards still matched the Round 5 solver with both dictionaries, in the SSSE3 and scalar builds.
+
+### Round 9 — Two-slot bit-scan expansion, 8-byte path states, packed word spans, and division-free board shuffling
+
+Disassembling the Round 8 solver and board shuffler highlighted bottlenecks in both single-board search and million-board throughput:
+
+1. **Two-slot `tzcnt`/`blsr` neighbour expansion (`BoggleSolver`)**: In Round 6, each visited path wrote all 8 geometric neighbour slots from `NEIGHBOUR_LIST[path.cell]`, executing 8 `popcnt` instructions and 24 memory stores with an 8-step serial dependency chain on `next_size`. Across a Boggle search, the average number of matching neighbours (`std::popcount(keep)`) is below 1.0, ~93% of visited states have at most 2 matching neighbours, and executing 26+ stores per iteration saturated the CPU's store buffer after fewer than 3 iterations. The solver now extracts the two lowest set bits of `keep` unconditionally with `std::countr_zero` (`tzcnt`) and `keep &= keep - 1` (`blsr`)—using `lower_letters[32] == 0` when `keep == 0`—and handles the rare $\ge 3$ matching-neighbour case in an `[[unlikely]]` tail before advancing `next_ptr += std::popcount(initial_keep)`. Because `NEIGHBOUR_LIST` was ordered by ascending cell index, `std::countr_zero` produces the exact same word order.
+2. **8-byte `PathState` and register-resident inner loop (`BoggleSolver`)**: `PathState` narrowed `cell` and `visited` from `uint32_t` to `uint16_t`, shrinking `PathState` from 12 bytes to 8 bytes (cutting queue bandwidth by 33% and removing `*3` address calculations and division-by-12 magic multiplies). Replacing base+index pairs in the BFS loop with advancing `__restrict` pointers (`path_ptr`, `next_ptr`, `found_ptr`) freed four general-purpose registers and eliminated per-iteration stack spills of `trie.nodes_.data()`, `found_bits`, and `found_nodes`.
+3. **In-register SIMD board preparation (`BoggleSolver`)**: Previously, board preprocessing wrote `letter_bytes[16]` and `letter_bits[16]` byte-by-byte to the stack and immediately loaded them with 16-byte `_mm_loadu_si128`, triggering store-to-load forwarding stalls on every solve. Both selectors are now built directly in XMM registers using `_mm_adds_epu8` (setting bit 7 for bytes $\ge 26$ so `_mm_shuffle_epi8` zeroes non-letter cells), and `lower_letters` is branchless and auto-vectorized with AVX2 `vpsllvd`.
+4. **4-byte packed word spans and direct `std::string_view` construction (`CompactTrie`)**: `WordSpan` packed `(offset << 8) | length` into a single `uint32_t` (shrinking `word_spans_` from 3.49 MB to 1.74 MB on the 138,735-word dictionary), and `CompactTrie::GetWord` now constructs `std::string_view(word_text_.data() + (span >> 8), span & 0xFFU)` directly instead of calling `.substr()`, removing per-word bounds checks and exception branches.
+5. **Division-free single-pass `BoggleBoard::Shuffle()` and inline `GetFlattenedBoard()` (`BoggleBoard`)**: Replaced `std::shuffle` (15 non-inlined calls with 64-bit integer divisions) and 16 `std::uniform_int_distribution` calls (31 RNG draws total) with a single-pass Fisher-Yates shuffle + face roll that consumes 8 `uint32_t` RNG draws per board (four 8-bit fixed-point multiplications `((byte * range) >> 8)` per 32-bit draw, zero divisions). Stored `STANDARD_DICE` as a flat `16×8` char table instead of `std::string_view` pointers, and inlined `GetFlattenedBoard()` via `std::bit_cast`.
+6. **L1-sized initial scratch buffers (`BoggleSolver`)**: Sized `found_word_nodes_` initially to `std::min(total_words + 1, 1024)` (4 KB instead of 555 KB per solver, avoiding 17.7 MB of allocations across 32 threads) with an `[[unlikely]]` growth check between BFS levels, and pre-sized `level_` and `next_level_` on solver construction.
+
+#### Single-board solve benchmarks (Round 8 vs. Round 9)
+
+Measured on 27 November 2026 on the same machine, single thread pinned to logical CPU 2 (`0x4`), 10 repetitions per benchmark:
+
+| Benchmark | Dictionary | Round 8 (Median) | Round 9 (Median) | Time reduction | Speed-up |
+|:---|:---|---:|---:|---:|---:|
+| `BM_SolveFixedBoard` | 2,000 words | 868 ns | 341 ns | 60.7% | 2.55× |
+| `BM_SolveViewsReused` | 2,000 words | 817 ns | 540 ns | 33.9% | 1.51× |
+| `BM_SolveViewsReused` | 138,735 words | 3,503 ns | 2,609 ns | 25.5% | 1.34× |
+| `BM_SolveViewsFresh` | 2,000 words | 868 ns | 594 ns | 31.6% | 1.46× |
+| `BM_SolveViewsFresh` | 138,735 words | 3,812 ns | 2,786 ns | 26.9% | 1.37× |
+| `BM_SolveRandomBoards` | 2,000 words | 906 ns | 609 ns | 32.8% | 1.49× |
+| `BM_SolveRandomBoards` | 138,735 words | 3,754 ns | 2,741 ns | 27.0% | 1.37× |
+| `BM_SolveRandomBoards` (32 threads) | 2,000 words | — | 23.49 M boards/s | — | — |
+| `BM_SolveRandomBoards` (32 threads) | 138,735 words | — | 5.28 M boards/s | — | — |
+
+#### Million-board shuffle and solve challenge (Round 8 vs. Round 9)
+
+| Dictionary | Threads | Round 8 | Round 9 | Time reduction | Speed-up |
+|:---|---:|---:|---:|---:|---:|
+| 2,000 words | 1 thread | 0.941 s | 0.593 s | 37.0% | 1.59× |
+| 2,000 words | 32 threads | 0.0979 s | 0.0471 s | 51.9% | 2.08× |
+| 138,735 words | 1 thread | 3.628 s | 2.638 s | 27.3% | 1.38× |
+| 138,735 words | 32 threads | 0.3041 s | 0.1890 s | 37.8% | 1.61× |
+
+[Recorded benchmark results](../benchmark/results/round_9_2026-11-27.json)
+
+All 39 Release tests passed, verifying exact word sets and ordering across all seeded and special-case boards.

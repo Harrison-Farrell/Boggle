@@ -85,8 +85,8 @@ public:
   /// @param node_index A node for which IsWord() is true
   /// @return The word in upper case, "Q" written as "QU"
   std::string_view GetWord(int32_t node_index) const {
-    const WordSpan span = word_spans_[node_index];
-    return std::string_view(word_text_).substr(span.offset, span.length);
+    const uint32_t span = word_spans_[node_index];
+    return std::string_view(word_text_.data() + (span >> 8), span & 0xFFU);
   }
 
   /// @brief Gets the total number of nodes
@@ -107,17 +107,13 @@ private:
     uint32_t first_child = 0;
   };
 
-  struct WordSpan {
-    uint32_t offset = 0;
-    uint32_t length = 0;
-  };
-
   std::vector<Node> nodes_;
   size_t total_words_ = 0;
 
-  // Words are only read when found, so they are kept out of the node array
+  // Words are only read when found, so they are kept out of the node array.
+  // Each span packs (offset << 8) | length into 4 bytes.
   std::string word_text_;
-  std::vector<WordSpan> word_spans_;
+  std::vector<uint32_t> word_spans_;
 };
 
 #endif // COMPACT_TRIE_H
