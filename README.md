@@ -8,6 +8,20 @@ A C++23 Boggle solver focused on fast word search on a standard 4×4 board. It l
 
 The solver combines an immutable compact trie with a search that extends all paths one cell at a time. It supports owned string results or reusable buffers of word views, and multiple worker threads can share one trie. Boards can be seeded for reproducible runs.
 
+## How it works
+
+### System architecture, memory layout, and multi-thread pipeline
+
+![System architecture, memory layout, and multi-thread pipeline](images/system_architecture.svg)
+
+### Single-board search pipeline and optimization methods
+
+![Single-board search pipeline and inner-loop optimizations](images/search_pipeline.svg)
+
+### Step-by-step single-board solve walkthrough
+
+![Step-by-step single-board solve walkthrough](images/single_board_step_by_step.svg)
+
 ## Get started
 
 You need CMake 3.31.6 or newer and Clang with the required C++23 features; CI uses Clang 22. Windows builds also use the Visual Studio C++ toolchain and Ninja.

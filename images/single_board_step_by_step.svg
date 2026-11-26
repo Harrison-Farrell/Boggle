@@ -1,0 +1,597 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1560 560" width="100%" height="100%" font-family="'Segoe UI', Inter, system-ui, sans-serif">
+  <defs>
+    <linearGradient id="bg3" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <marker id="mC" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#38bdf8"/>
+    </marker>
+    <marker id="mG" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#34d399"/>
+    </marker>
+    <marker id="mY" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#fbbf24"/>
+    </marker>
+    <marker id="mP" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#c084fc"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas -->
+  <rect width="1560" height="560" rx="14" fill="url(#bg3)" stroke="#334155" stroke-width="2"/>
+
+  <!-- =================================================================== -->
+  <!-- BLOCK 1: 4x4 BOARD                                                  -->
+  <!-- =================================================================== -->
+  <rect x="16" y="20" width="184" height="520" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+  <rect x="16" y="20" width="184" height="32" rx="10" fill="#0369a1"/>
+  <text x="108" y="41" fill="#f8fafc" font-size="13.5" font-weight="700" text-anchor="middle">1. 4×4 Board</text>
+
+  <!-- 4x4 Letter Grid (C A T S / Q R E D / N O P L / M I K B) -->
+  <g transform="translate(32, 76)" font-family="Consolas, monospace" font-size="16" font-weight="700" text-anchor="middle">
+    <!-- Row 0 -->
+    <rect x="0" y="0" width="35" height="35" rx="4" fill="#1e3a8a" stroke="#60a5fa" stroke-width="2"/>
+    <text x="17.5" y="23" fill="#fff">C</text>
+    <rect x="39" y="0" width="35" height="35" rx="4" fill="#0284c7" stroke="#bae6fd" stroke-width="2"/>
+    <text x="56.5" y="23" fill="#fff">A</text>
+    <rect x="78" y="0" width="35" height="35" rx="4" fill="#065f46" stroke="#34d399" stroke-width="2"/>
+    <text x="95.5" y="23" fill="#a7f3d0">T</text>
+    <rect x="117" y="0" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/>
+    <text x="134.5" y="23" fill="#94a3b8">S</text>
+    <!-- Row 1 -->
+    <rect x="0" y="39" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/>
+    <text x="17.5" y="62" fill="#94a3b8">Q</text>
+    <rect x="39" y="39" width="35" height="35" rx="4" fill="#065f46" stroke="#34d399" stroke-width="2"/>
+    <text x="56.5" y="62" fill="#a7f3d0">R</text>
+    <rect x="78" y="39" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/>
+    <text x="95.5" y="62" fill="#94a3b8">E</text>
+    <rect x="117" y="39" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/>
+    <text x="134.5" y="62" fill="#94a3b8">D</text>
+    <!-- Row 2 -->
+    <rect x="0" y="78" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/>
+    <text x="17.5" y="101" fill="#64748b">N</text>
+    <rect x="39" y="78" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/>
+    <text x="56.5" y="101" fill="#64748b">O</text>
+    <rect x="78" y="78" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/>
+    <text x="95.5" y="101" fill="#64748b">P</text>
+    <rect x="117" y="78" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/>
+    <text x="134.5" y="101" fill="#64748b">L</text>
+    <!-- Row 3 -->
+    <rect x="0" y="117" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/>
+    <text x="17.5" y="140" fill="#64748b">M</text>
+    <rect x="39" y="117" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/>
+    <text x="56.5" y="140" fill="#64748b">I</text>
+    <rect x="78" y="117" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/>
+    <text x="95.5" y="140" fill="#64748b">K</text>
+    <rect x="117" y="117" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/>
+    <text x="134.5" y="140" fill="#64748b">B</text>
+
+    <!-- Path overlay arrows: C(0) -> A(1) -> T(2) and A(1) -> R(5) -->
+    <line x1="28" y1="17.5" x2="44" y2="17.5" stroke="#fbbf24" stroke-width="2.5" marker-end="url(#mY)"/>
+    <line x1="68" y1="17.5" x2="84" y2="17.5" stroke="#34d399" stroke-width="2.5" marker-end="url(#mG)"/>
+    <line x1="56.5" y1="29" x2="56.5" y2="45" stroke="#34d399" stroke-width="2.5" marker-end="url(#mG)"/>
+  </g>
+
+  <!-- 4x4 Cell Index Grid (0..15) -->
+  <g transform="translate(32, 286)" font-family="Consolas, monospace" font-size="13" font-weight="700" text-anchor="middle">
+    <rect x="0" y="0" width="35" height="35" rx="4" fill="#1e3a8a" stroke="#60a5fa"/><text x="17.5" y="22" fill="#93c5fd">0</text>
+    <rect x="39" y="0" width="35" height="35" rx="4" fill="#0284c7" stroke="#bae6fd"/><text x="56.5" y="22" fill="#e0f2fe">1</text>
+    <rect x="78" y="0" width="35" height="35" rx="4" fill="#065f46" stroke="#34d399"/><text x="95.5" y="22" fill="#a7f3d0">2</text>
+    <rect x="117" y="0" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/><text x="134.5" y="22" fill="#64748b">3</text>
+
+    <rect x="0" y="39" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/><text x="17.5" y="61" fill="#64748b">4</text>
+    <rect x="39" y="39" width="35" height="35" rx="4" fill="#065f46" stroke="#34d399"/><text x="56.5" y="61" fill="#a7f3d0">5</text>
+    <rect x="78" y="39" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/><text x="95.5" y="61" fill="#64748b">6</text>
+    <rect x="117" y="39" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/><text x="134.5" y="61" fill="#64748b">7</text>
+
+    <rect x="0" y="78" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/><text x="17.5" y="100" fill="#475569">8</text>
+    <rect x="39" y="78" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/><text x="56.5" y="100" fill="#475569">9</text>
+    <rect x="78" y="78" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/><text x="95.5" y="100" fill="#475569">10</text>
+    <rect x="117" y="78" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/><text x="134.5" y="100" fill="#475569">11</text>
+
+    <rect x="0" y="117" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/><text x="17.5" y="139" fill="#475569">12</text>
+    <rect x="39" y="117" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/><text x="56.5" y="139" fill="#475569">13</text>
+    <rect x="78" y="117" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/><text x="95.5" y="139" fill="#475569">14</text>
+    <rect x="117" y="117" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/><text x="134.5" y="139" fill="#475569">15</text>
+  </g>
+
+  <!-- Arrow Block 1 -> Block 2 -->
+  <line x1="200" y1="280" x2="224" y2="280" stroke="#38bdf8" stroke-width="2.5" marker-end="url(#mC)"/>
+
+  <!-- =================================================================== -->
+  <!-- BLOCK 2: 16-LANE SIMD REGISTER                                      -->
+  <!-- =================================================================== -->
+  <rect x="228" y="20" width="164" height="520" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+  <rect x="228" y="20" width="164" height="32" rx="10" fill="#0369a1"/>
+  <text x="310" y="41" fill="#f8fafc" font-size="13.5" font-weight="700" text-anchor="middle">2. 16-Lane SIMD</text>
+
+  <!-- 16 Vertical Lanes: index -> lowercase -> uppercase -> bitmask -->
+  <g transform="translate(242, 68)" font-family="Consolas, monospace" font-size="11.5" font-weight="700" text-anchor="middle">
+    <!-- Lane 0: C -->
+    <rect x="0" y="0" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="16" fill="#64748b">0</text>
+    <rect x="28" y="0" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="16" fill="#94a3b8">c</text>
+    <text x="68" y="16" fill="#38bdf8">→</text>
+    <rect x="80" y="0" width="28" height="24" fill="#1e3a8a" stroke="#60a5fa"/><text x="94" y="16" fill="#fff">C</text>
+    <rect x="112" y="0" width="24" height="24" fill="#065f46" stroke="#34d399"/><text x="124" y="16" fill="#34d399">2</text>
+
+    <!-- Lane 1: A -->
+    <rect x="0" y="28" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="44" fill="#64748b">1</text>
+    <rect x="28" y="28" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="44" fill="#94a3b8">a</text>
+    <text x="68" y="44" fill="#38bdf8">→</text>
+    <rect x="80" y="28" width="28" height="24" fill="#0284c7" stroke="#bae6fd"/><text x="94" y="44" fill="#fff">A</text>
+    <rect x="112" y="28" width="24" height="24" fill="#065f46" stroke="#34d399"/><text x="124" y="44" fill="#34d399">0</text>
+
+    <!-- Lane 2: T -->
+    <rect x="0" y="56" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="72" fill="#64748b">2</text>
+    <rect x="28" y="56" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="72" fill="#94a3b8">t</text>
+    <text x="68" y="72" fill="#38bdf8">→</text>
+    <rect x="80" y="56" width="28" height="24" fill="#065f46" stroke="#34d399"/><text x="94" y="72" fill="#a7f3d0">T</text>
+    <rect x="112" y="56" width="24" height="24" fill="#065f46" stroke="#34d399"/><text x="124" y="72" fill="#34d399">19</text>
+
+    <!-- Lane 3: S -->
+    <rect x="0" y="84" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="100" fill="#64748b">3</text>
+    <rect x="28" y="84" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="100" fill="#94a3b8">s</text>
+    <text x="68" y="100" fill="#38bdf8">→</text>
+    <rect x="80" y="84" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="94" y="100" fill="#cbd5e1">S</text>
+    <rect x="112" y="84" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="124" y="100" fill="#94a3b8">18</text>
+
+    <!-- Lane 4: Q -->
+    <rect x="0" y="112" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="128" fill="#64748b">4</text>
+    <rect x="28" y="112" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="128" fill="#94a3b8">q</text>
+    <text x="68" y="128" fill="#38bdf8">→</text>
+    <rect x="80" y="112" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="94" y="128" fill="#cbd5e1">Q</text>
+    <rect x="112" y="112" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="124" y="128" fill="#94a3b8">16</text>
+
+    <!-- Lane 5: R -->
+    <rect x="0" y="140" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="156" fill="#64748b">5</text>
+    <rect x="28" y="140" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="156" fill="#94a3b8">r</text>
+    <text x="68" y="156" fill="#38bdf8">→</text>
+    <rect x="80" y="140" width="28" height="24" fill="#065f46" stroke="#34d399"/><text x="94" y="156" fill="#a7f3d0">R</text>
+    <rect x="112" y="140" width="24" height="24" fill="#065f46" stroke="#34d399"/><text x="124" y="156" fill="#34d399">17</text>
+
+    <!-- Lane 6: E -->
+    <rect x="0" y="168" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="184" fill="#64748b">6</text>
+    <rect x="28" y="168" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="184" fill="#94a3b8">e</text>
+    <text x="68" y="184" fill="#38bdf8">→</text>
+    <rect x="80" y="168" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="94" y="184" fill="#cbd5e1">E</text>
+    <rect x="112" y="168" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="124" y="184" fill="#94a3b8">4</text>
+
+    <!-- Lane 7: D -->
+    <rect x="0" y="196" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="212" fill="#64748b">7</text>
+    <rect x="28" y="196" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="212" fill="#94a3b8">d</text>
+    <text x="68" y="212" fill="#38bdf8">→</text>
+    <rect x="80" y="196" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="94" y="212" fill="#cbd5e1">D</text>
+    <rect x="112" y="196" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="124" y="212" fill="#94a3b8">3</text>
+
+    <!-- Lanes 8..14 -->
+    <rect x="0" y="224" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="240" fill="#64748b">8</text>
+    <rect x="28" y="224" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="240" fill="#64748b">n</text>
+    <text x="68" y="240" fill="#38bdf8">→</text>
+    <rect x="80" y="224" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="94" y="240" fill="#64748b">N</text>
+    <rect x="112" y="224" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="124" y="240" fill="#64748b">13</text>
+
+    <rect x="0" y="252" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="268" fill="#64748b">9</text>
+    <rect x="28" y="252" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="268" fill="#64748b">o</text>
+    <text x="68" y="268" fill="#38bdf8">→</text>
+    <rect x="80" y="252" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="94" y="268" fill="#64748b">O</text>
+    <rect x="112" y="252" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="124" y="268" fill="#64748b">14</text>
+
+    <rect x="0" y="280" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="296" fill="#64748b">10</text>
+    <rect x="28" y="280" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="296" fill="#64748b">p</text>
+    <text x="68" y="296" fill="#38bdf8">→</text>
+    <rect x="80" y="280" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="94" y="296" fill="#64748b">P</text>
+    <rect x="112" y="280" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="124" y="296" fill="#64748b">15</text>
+
+    <rect x="0" y="308" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="324" fill="#64748b">11</text>
+    <rect x="28" y="308" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="324" fill="#64748b">l</text>
+    <text x="68" y="324" fill="#38bdf8">→</text>
+    <rect x="80" y="308" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="94" y="324" fill="#64748b">L</text>
+    <rect x="112" y="308" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="124" y="324" fill="#64748b">11</text>
+
+    <rect x="0" y="336" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="352" fill="#64748b">12</text>
+    <rect x="28" y="336" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="352" fill="#64748b">m</text>
+    <text x="68" y="352" fill="#38bdf8">→</text>
+    <rect x="80" y="336" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="94" y="352" fill="#64748b">M</text>
+    <rect x="112" y="336" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="124" y="352" fill="#64748b">12</text>
+
+    <rect x="0" y="364" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="380" fill="#64748b">13</text>
+    <rect x="28" y="364" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="380" fill="#64748b">i</text>
+    <text x="68" y="380" fill="#38bdf8">→</text>
+    <rect x="80" y="364" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="94" y="380" fill="#64748b">I</text>
+    <rect x="112" y="364" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="124" y="380" fill="#64748b">8</text>
+
+    <rect x="0" y="392" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="408" fill="#64748b">14</text>
+    <rect x="28" y="392" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="408" fill="#64748b">k</text>
+    <text x="68" y="408" fill="#38bdf8">→</text>
+    <rect x="80" y="392" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="94" y="408" fill="#64748b">K</text>
+    <rect x="112" y="392" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="124" y="408" fill="#64748b">10</text>
+
+    <rect x="0" y="420" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="436" fill="#64748b">15</text>
+    <rect x="28" y="420" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="436" fill="#64748b">b</text>
+    <text x="68" y="436" fill="#38bdf8">→</text>
+    <rect x="80" y="420" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="94" y="436" fill="#64748b">B</text>
+    <rect x="112" y="420" width="24" height="24" fill="#065f46" stroke="#34d399"/><text x="124" y="436" fill="#34d399">1</text>
+  </g>
+
+  <!-- Arrow Block 2 -> Block 3 -->
+  <line x1="392" y1="280" x2="416" y2="280" stroke="#fbbf24" stroke-width="2.5" marker-end="url(#mY)"/>
+
+  <!-- =================================================================== -->
+  <!-- BLOCK 3: BFS QUEUE (LEVEL 1 -> LEVEL 2)                             -->
+  <!-- =================================================================== -->
+  <rect x="420" y="20" width="212" height="520" rx="10" fill="#1e293b" stroke="#fbbf24" stroke-width="1.5"/>
+  <rect x="420" y="20" width="212" height="32" rx="10" fill="#b45309"/>
+  <text x="526" y="41" fill="#fffbeb" font-size="13.5" font-weight="700" text-anchor="middle">3. BFS Level Queue</text>
+
+  <!-- Sub-block 3A: Level 1 (1-Cell Paths) -->
+  <rect x="434" y="66" width="184" height="206" rx="8" fill="#0f172a" stroke="#f59e0b"/>
+  <rect x="434" y="66" width="184" height="24" rx="8" fill="#78350f"/>
+  <text x="526" y="82" fill="#fde68a" font-size="12" font-weight="700" text-anchor="middle">3A. Level 1 (1 Cell)</text>
+
+  <!-- Queue Item: [#3 'C' | Cell 0 | Visited Grid] -->
+  <g transform="translate(446, 102)" font-family="Consolas, monospace" font-size="11" font-weight="700" text-anchor="middle">
+    <rect x="0" y="0" width="52" height="36" rx="4" fill="#1e3a8a" stroke="#60a5fa"/>
+    <text x="26" y="15" fill="#93c5fd">#3</text>
+    <text x="26" y="30" fill="#fff">"C"</text>
+    <rect x="56" y="0" width="38" height="36" rx="4" fill="#065f46" stroke="#34d399"/>
+    <text x="75" y="22" fill="#a7f3d0">@0</text>
+    <!-- 4x4 mini visited grid (cell 0 lit) -->
+    <g transform="translate(106, 2)">
+      <rect x="0" y="0" width="8" height="8" fill="#60a5fa"/><rect x="8" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+    </g>
+  </g>
+
+  <!-- Queue Item: [#20 'T' | Cell 2] -->
+  <g transform="translate(446, 152)" font-family="Consolas, monospace" font-size="11" font-weight="700" text-anchor="middle">
+    <rect x="0" y="0" width="52" height="36" rx="4" fill="#0f172a" stroke="#475569"/>
+    <text x="26" y="15" fill="#94a3b8">#20</text>
+    <text x="26" y="30" fill="#cbd5e1">"T"</text>
+    <rect x="56" y="0" width="38" height="36" rx="4" fill="#0f172a" stroke="#475569"/>
+    <text x="75" y="22" fill="#94a3b8">@2</text>
+    <g transform="translate(106, 2)">
+      <rect x="0" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="0" width="8" height="8" fill="#60a5fa"/><rect x="24" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+    </g>
+  </g>
+
+  <!-- Queue Item: [#19 'S' | Cell 3] -->
+  <g transform="translate(446, 202)" font-family="Consolas, monospace" font-size="11" font-weight="700" text-anchor="middle">
+    <rect x="0" y="0" width="52" height="36" rx="4" fill="#0f172a" stroke="#475569"/>
+    <text x="26" y="15" fill="#94a3b8">#19</text>
+    <text x="26" y="30" fill="#cbd5e1">"S"</text>
+    <rect x="56" y="0" width="38" height="36" rx="4" fill="#0f172a" stroke="#475569"/>
+    <text x="75" y="22" fill="#94a3b8">@3</text>
+    <g transform="translate(106, 2)">
+      <rect x="0" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="0" width="8" height="8" fill="#60a5fa"/>
+      <rect x="0" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+    </g>
+  </g>
+
+  <!-- Arrow 3A -> 3B -->
+  <line x1="526" y1="274" x2="526" y2="306" stroke="#fbbf24" stroke-width="2.5" marker-end="url(#mY)"/>
+
+  <!-- Sub-block 3B: Level 2 (2-Cell Paths) -->
+  <rect x="434" y="310" width="184" height="212" rx="8" fill="#0f172a" stroke="#fbbf24" stroke-width="1.5"/>
+  <rect x="434" y="310" width="184" height="24" rx="8" fill="#92400e"/>
+  <text x="526" y="326" fill="#fde68a" font-size="12" font-weight="700" text-anchor="middle">3B. Level 2 (2 Cells)</text>
+
+  <!-- Queue Item: [#45 'CA' | Cell 1 | Visited 0,1] -->
+  <g transform="translate(446, 346)" font-family="Consolas, monospace" font-size="11" font-weight="700" text-anchor="middle">
+    <rect x="0" y="0" width="52" height="36" rx="4" fill="#0284c7" stroke="#bae6fd" stroke-width="2"/>
+    <text x="26" y="15" fill="#e0f2fe">#45</text>
+    <text x="26" y="30" fill="#fff">"CA"</text>
+    <rect x="56" y="0" width="38" height="36" rx="4" fill="#065f46" stroke="#34d399" stroke-width="2"/>
+    <text x="75" y="22" fill="#a7f3d0">@1</text>
+    <g transform="translate(106, 2)">
+      <rect x="0" y="0" width="8" height="8" fill="#a855f7"/><rect x="8" y="0" width="8" height="8" fill="#38bdf8"/><rect x="16" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+    </g>
+  </g>
+
+  <!-- Queue Item: [#52 'TA' | Cell 1 | Visited 2,1] -->
+  <g transform="translate(446, 398)" font-family="Consolas, monospace" font-size="11" font-weight="700" text-anchor="middle">
+    <rect x="0" y="0" width="52" height="36" rx="4" fill="#0f172a" stroke="#475569"/>
+    <text x="26" y="15" fill="#94a3b8">#52</text>
+    <text x="26" y="30" fill="#cbd5e1">"TA"</text>
+    <rect x="56" y="0" width="38" height="36" rx="4" fill="#0f172a" stroke="#475569"/>
+    <text x="75" y="22" fill="#94a3b8">@1</text>
+    <g transform="translate(106, 2)">
+      <rect x="0" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="0" width="8" height="8" fill="#38bdf8"/><rect x="16" y="0" width="8" height="8" fill="#a855f7"/><rect x="24" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+    </g>
+  </g>
+
+  <!-- Queue Item: [#61 'SE' | Cell 6 | Visited 3,6] -->
+  <g transform="translate(446, 450)" font-family="Consolas, monospace" font-size="11" font-weight="700" text-anchor="middle">
+    <rect x="0" y="0" width="52" height="36" rx="4" fill="#0f172a" stroke="#475569"/>
+    <text x="26" y="15" fill="#94a3b8">#61</text>
+    <text x="26" y="30" fill="#cbd5e1">"SE"</text>
+    <rect x="56" y="0" width="38" height="36" rx="4" fill="#0f172a" stroke="#475569"/>
+    <text x="75" y="22" fill="#94a3b8">@6</text>
+    <g transform="translate(106, 2)">
+      <rect x="0" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="0" width="8" height="8" fill="#a855f7"/>
+      <rect x="0" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="8" width="8" height="8" fill="#38bdf8"/><rect x="24" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+    </g>
+  </g>
+
+  <!-- Arrow Block 3 (#45 "CA") -> Block 4 -->
+  <line x1="632" y1="364" x2="656" y2="364" stroke="#38bdf8" stroke-width="2.5" marker-end="url(#mC)"/>
+
+  <!-- =================================================================== -->
+  <!-- BLOCK 4: TRIE NODE #45 ("CA") & POPCOUNT CHILD OFFSET               -->
+  <!-- =================================================================== -->
+  <rect x="660" y="20" width="212" height="520" rx="10" fill="#1e293b" stroke="#34d399" stroke-width="1.5"/>
+  <rect x="660" y="20" width="212" height="32" rx="10" fill="#065f46"/>
+  <text x="766" y="41" fill="#ecfdf5" font-size="13.5" font-weight="700" text-anchor="middle">4. Trie Node Lookup</text>
+
+  <!-- Visual Tree Node #45 "CA" -> #100 "CAB", #101 "CAR", #102 "CAT" -->
+  <g transform="translate(674, 72)" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">
+    <circle cx="34" cy="64" r="24" fill="#0284c7" stroke="#bae6fd" stroke-width="2"/>
+    <text x="34" y="60" fill="#e0f2fe" font-size="11">#45</text>
+    <text x="34" y="75" fill="#fff" font-size="12">"CA"</text>
+
+    <line x1="58" y1="52" x2="104" y2="24" stroke="#64748b" stroke-width="2"/>
+    <rect x="104" y="6" width="76" height="34" rx="5" fill="#0f172a" stroke="#64748b"/>
+    <text x="142" y="21" fill="#94a3b8" font-size="10.5">#100 (+0)</text>
+    <text x="142" y="34" fill="#cbd5e1" font-size="11">"CAB" ★</text>
+
+    <line x1="58" y1="64" x2="104" y2="64" stroke="#34d399" stroke-width="2.2"/>
+    <rect x="104" y="47" width="76" height="34" rx="5" fill="#064e3b" stroke="#34d399" stroke-width="1.8"/>
+    <text x="142" y="62" fill="#a7f3d0" font-size="10.5">#101 (+1)</text>
+    <text x="142" y="75" fill="#fff" font-size="11">"CAR" ★</text>
+
+    <line x1="58" y1="76" x2="104" y2="104" stroke="#34d399" stroke-width="2.2"/>
+    <rect x="104" y="88" width="76" height="34" rx="5" fill="#064e3b" stroke="#34d399" stroke-width="1.8"/>
+    <text x="142" y="103" fill="#a7f3d0" font-size="10.5">#102 (+2)</text>
+    <text x="142" y="116" fill="#fff" font-size="11">"CAT" ★</text>
+  </g>
+
+  <!-- 26-Bit Child Mask of #45 ("CA"): B=1, R=1, T=1 -->
+  <rect x="674" y="214" width="184" height="172" rx="8" fill="#0f172a" stroke="#10b981"/>
+  <rect x="674" y="214" width="184" height="24" rx="8" fill="#064e3b"/>
+  <text x="766" y="230" fill="#a7f3d0" font-size="11.5" font-weight="700" text-anchor="middle">4A. 26-Bit Child Mask</text>
+
+  <g transform="translate(684, 248)" font-family="Consolas, monospace" font-size="11" font-weight="700" text-anchor="middle">
+    <rect x="0" y="0" width="22" height="34" fill="#1e293b" stroke="#475569"/><text x="11" y="14" fill="#64748b">A</text><text x="11" y="29" fill="#475569">0</text>
+    <rect x="22" y="0" width="22" height="34" fill="#065f46" stroke="#34d399"/><text x="33" y="14" fill="#a7f3d0">B</text><text x="33" y="29" fill="#34d399">1</text>
+    <rect x="44" y="0" width="22" height="34" fill="#1e293b" stroke="#475569"/><text x="55" y="14" fill="#64748b">C</text><text x="55" y="29" fill="#475569">0</text>
+    <rect x="66" y="0" width="24" height="34" fill="#1e293b" stroke="#475569"/><text x="78" y="22" fill="#475569">··</text>
+    <rect x="90" y="0" width="22" height="34" fill="#065f46" stroke="#34d399"/><text x="101" y="14" fill="#a7f3d0">R</text><text x="101" y="29" fill="#34d399">1</text>
+    <rect x="112" y="0" width="22" height="34" fill="#1e293b" stroke="#475569"/><text x="123" y="14" fill="#64748b">S</text><text x="123" y="29" fill="#475569">0</text>
+    <rect x="134" y="0" width="28" height="34" fill="#1e3a8a" stroke="#60a5fa"/><text x="148" y="14" fill="#fff">T</text><text x="148" y="29" fill="#60a5fa">1</text>
+
+    <!-- Visual Popcount Offset Math -->
+    <rect x="0" y="46" width="162" height="34" rx="4" fill="#1e293b" stroke="#34d399"/>
+    <text x="81" y="68" fill="#a7f3d0" font-size="12">R: 100 + 1 = #101</text>
+
+    <rect x="0" y="88" width="162" height="34" rx="4" fill="#1e3a8a" stroke="#60a5fa"/>
+    <text x="81" y="110" fill="#eff6ff" font-size="12">T: 100 + 2 = #102</text>
+  </g>
+
+  <!-- Sub-block 4B: Word Check -->
+  <rect x="674" y="400" width="184" height="122" rx="8" fill="#0f172a" stroke="#f97316"/>
+  <rect x="674" y="400" width="184" height="24" rx="8" fill="#9a3412"/>
+  <text x="766" y="416" fill="#ffedd5" font-size="11.5" font-weight="700" text-anchor="middle">4B. End-of-Word Bit</text>
+
+  <g transform="translate(686, 438)" font-family="Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">
+    <rect x="0" y="0" width="160" height="30" rx="4" fill="#1e293b" stroke="#475569"/>
+    <text x="80" y="20" fill="#94a3b8">#45 "CA" → 0</text>
+    <rect x="0" y="38" width="160" height="30" rx="4" fill="#064e3b" stroke="#34d399"/>
+    <text x="80" y="58" fill="#a7f3d0">#102 "CAT" → 1 ★</text>
+  </g>
+
+  <!-- Arrow Block 4 -> Block 5 -->
+  <line x1="872" y1="280" x2="896" y2="280" stroke="#38bdf8" stroke-width="2.5" marker-end="url(#mC)"/>
+
+  <!-- =================================================================== -->
+  <!-- BLOCK 5: 16-BIT MASK INTERSECTION (3 4x4 GRIDS COMBINED WITH &)     -->
+  <!-- =================================================================== -->
+  <rect x="900" y="20" width="196" height="520" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+  <rect x="900" y="20" width="196" height="32" rx="10" fill="#0284c7"/>
+  <text x="998" y="41" fill="#e0f2fe" font-size="13.5" font-weight="700" text-anchor="middle">5. 16-Bit Grid Filter</text>
+
+  <!-- Grid 5A: Adjacent to Cell 1 ('A') -> cells 0, 2, 4, 5, 6 -->
+  <rect x="914" y="62" width="168" height="104" rx="6" fill="#0f172a" stroke="#f59e0b"/>
+  <text x="998" y="78" fill="#fde68a" font-size="11" font-weight="700" text-anchor="middle">5A. Neighbours (@1)</text>
+  <g transform="translate(962, 84)">
+    <rect x="0" y="0" width="18" height="18" fill="#f59e0b" stroke="#fef3c7"/><rect x="18" y="0" width="18" height="18" fill="#0284c7" stroke="#fff"/><rect x="36" y="0" width="18" height="18" fill="#f59e0b" stroke="#fef3c7"/><rect x="54" y="0" width="18" height="18" fill="#1e293b" stroke="#334155"/>
+    <rect x="0" y="18" width="18" height="18" fill="#f59e0b" stroke="#fef3c7"/><rect x="18" y="18" width="18" height="18" fill="#f59e0b" stroke="#fef3c7"/><rect x="36" y="18" width="18" height="18" fill="#f59e0b" stroke="#fef3c7"/><rect x="54" y="18" width="18" height="18" fill="#1e293b" stroke="#334155"/>
+    <rect x="0" y="36" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="18" y="36" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="36" y="36" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="54" y="36" width="18" height="18" fill="#1e293b" stroke="#334155"/>
+    <rect x="0" y="54" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="18" y="54" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="36" y="54" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="54" y="54" width="18" height="18" fill="#1e293b" stroke="#334155"/>
+  </g>
+
+  <text x="998" y="180" fill="#f8fafc" font-size="14" font-weight="700" text-anchor="middle">&amp;</text>
+
+  <!-- Grid 5B: Unvisited (~visited: all except 0, 1) -->
+  <rect x="914" y="186" width="168" height="104" rx="6" fill="#0f172a" stroke="#a855f7"/>
+  <text x="998" y="202" fill="#e9d5ff" font-size="11" font-weight="700" text-anchor="middle">5B. Unvisited (~0,1)</text>
+  <g transform="translate(962, 208)">
+    <rect x="0" y="0" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="18" y="0" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="36" y="0" width="18" height="18" fill="#a855f7" stroke="#f5f3ff"/><rect x="54" y="0" width="18" height="18" fill="#a855f7" stroke="#f5f3ff"/>
+    <rect x="0" y="18" width="18" height="18" fill="#a855f7" stroke="#f5f3ff"/><rect x="18" y="18" width="18" height="18" fill="#a855f7" stroke="#f5f3ff"/><rect x="36" y="18" width="18" height="18" fill="#a855f7" stroke="#f5f3ff"/><rect x="54" y="18" width="18" height="18" fill="#a855f7" stroke="#f5f3ff"/>
+    <rect x="0" y="36" width="18" height="18" fill="#a855f7" stroke="#f5f3ff"/><rect x="18" y="36" width="18" height="18" fill="#a855f7" stroke="#f5f3ff"/><rect x="36" y="36" width="18" height="18" fill="#a855f7" stroke="#f5f3ff"/><rect x="54" y="36" width="18" height="18" fill="#a855f7" stroke="#f5f3ff"/>
+    <rect x="0" y="54" width="18" height="18" fill="#a855f7" stroke="#f5f3ff"/><rect x="18" y="54" width="18" height="18" fill="#a855f7" stroke="#f5f3ff"/><rect x="36" y="54" width="18" height="18" fill="#a855f7" stroke="#f5f3ff"/><rect x="54" y="54" width="18" height="18" fill="#a855f7" stroke="#f5f3ff"/>
+  </g>
+
+  <text x="998" y="304" fill="#f8fafc" font-size="14" font-weight="700" text-anchor="middle">&amp;</text>
+
+  <!-- Grid 5C: SIMD Letter Match for {B, R, T} -> cells 2 ('T'), 5 ('R'), 15 ('B') -->
+  <rect x="914" y="310" width="168" height="104" rx="6" fill="#0f172a" stroke="#38bdf8"/>
+  <text x="998" y="326" fill="#7dd3fc" font-size="11" font-weight="700" text-anchor="middle">5C. SIMD {B, R, T}</text>
+  <g transform="translate(962, 332)">
+    <rect x="0" y="0" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="18" y="0" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="36" y="0" width="18" height="18" fill="#0284c7" stroke="#e0f2fe"/><rect x="54" y="0" width="18" height="18" fill="#1e293b" stroke="#334155"/>
+    <rect x="0" y="18" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="18" y="18" width="18" height="18" fill="#0284c7" stroke="#e0f2fe"/><rect x="36" y="18" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="54" y="18" width="18" height="18" fill="#1e293b" stroke="#334155"/>
+    <rect x="0" y="36" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="18" y="36" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="36" y="36" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="54" y="36" width="18" height="18" fill="#1e293b" stroke="#334155"/>
+    <rect x="0" y="54" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="18" y="54" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="36" y="54" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="54" y="54" width="18" height="18" fill="#0284c7" stroke="#e0f2fe"/>
+  </g>
+
+  <text x="998" y="426" fill="#34d399" font-size="15" font-weight="700" text-anchor="middle">=</text>
+
+  <!-- Grid 5D: Result Mask (only Cell 2 'T' and Cell 5 'R' lit) -->
+  <rect x="914" y="432" width="168" height="96" rx="6" fill="#064e3b" stroke="#34d399" stroke-width="1.8"/>
+  <g transform="translate(962, 444)" font-family="Consolas, monospace" font-size="11" font-weight="700" text-anchor="middle">
+    <rect x="0" y="0" width="18" height="18" fill="#0f172a" stroke="#334155"/><rect x="18" y="0" width="18" height="18" fill="#0f172a" stroke="#334155"/><rect x="36" y="0" width="18" height="18" fill="#10b981" stroke="#fff"/><text x="45" y="13" fill="#022c22">T</text><rect x="54" y="0" width="18" height="18" fill="#0f172a" stroke="#334155"/>
+    <rect x="0" y="18" width="18" height="18" fill="#0f172a" stroke="#334155"/><rect x="18" y="18" width="18" height="18" fill="#10b981" stroke="#fff"/><text x="27" y="31" fill="#022c22">R</text><rect x="36" y="18" width="18" height="18" fill="#0f172a" stroke="#334155"/><rect x="54" y="18" width="18" height="18" fill="#0f172a" stroke="#334155"/>
+    <rect x="0" y="36" width="18" height="18" fill="#0f172a" stroke="#334155"/><rect x="18" y="36" width="18" height="18" fill="#0f172a" stroke="#334155"/><rect x="36" y="36" width="18" height="18" fill="#0f172a" stroke="#334155"/><rect x="54" y="36" width="18" height="18" fill="#0f172a" stroke="#334155"/>
+    <rect x="0" y="54" width="18" height="18" fill="#0f172a" stroke="#334155"/><rect x="18" y="54" width="18" height="18" fill="#0f172a" stroke="#334155"/><rect x="36" y="54" width="18" height="18" fill="#0f172a" stroke="#334155"/><rect x="54" y="54" width="18" height="18" fill="#0f172a" stroke="#334155"/>
+  </g>
+
+  <!-- Arrow Block 5 -> Block 6 -->
+  <line x1="1096" y1="480" x2="1120" y2="480" stroke="#34d399" stroke-width="2.5" marker-end="url(#mG)"/>
+
+  <!-- =================================================================== -->
+  <!-- BLOCK 6: TWO-SLOT BIT SCAN (TZCNT / BLSR)                           -->
+  <!-- =================================================================== -->
+  <rect x="1124" y="20" width="196" height="520" rx="10" fill="#1e293b" stroke="#34d399" stroke-width="1.5"/>
+  <rect x="1124" y="20" width="196" height="32" rx="10" fill="#059669"/>
+  <text x="1222" y="41" fill="#ecfdf5" font-size="13.5" font-weight="700" text-anchor="middle">6. Two-Slot Bit Scan</text>
+
+  <!-- Slot 0: Jump to Bit 2 ('T') -->
+  <rect x="1138" y="70" width="168" height="204" rx="8" fill="#0f172a" stroke="#10b981" stroke-width="1.5"/>
+  <rect x="1138" y="70" width="168" height="24" rx="8" fill="#064e3b"/>
+  <text x="1222" y="86" fill="#a7f3d0" font-size="12" font-weight="700" text-anchor="middle">6A. Slot 0 (tzcnt)</text>
+
+  <!-- 8-bit strip 0..7 showing bit 2 and bit 5 set -->
+  <g transform="translate(1146, 110)" font-family="Consolas, monospace" font-size="10.5" font-weight="700" text-anchor="middle">
+    <rect x="0" y="0" width="19" height="26" fill="#1e293b" stroke="#475569"/><text x="9.5" y="17" fill="#64748b">0</text><text x="9.5" y="38" fill="#64748b">0</text>
+    <rect x="19" y="0" width="19" height="26" fill="#1e293b" stroke="#475569"/><text x="28.5" y="17" fill="#64748b">0</text><text x="28.5" y="38" fill="#64748b">1</text>
+    <rect x="38" y="0" width="19" height="26" fill="#10b981" stroke="#fff" stroke-width="1.8"/><text x="47.5" y="17" fill="#022c22">1</text><text x="47.5" y="38" fill="#34d399">2</text>
+    <rect x="57" y="0" width="19" height="26" fill="#1e293b" stroke="#475569"/><text x="66.5" y="17" fill="#64748b">0</text><text x="66.5" y="38" fill="#64748b">3</text>
+    <rect x="76" y="0" width="19" height="26" fill="#1e293b" stroke="#475569"/><text x="85.5" y="17" fill="#64748b">0</text><text x="85.5" y="38" fill="#64748b">4</text>
+    <rect x="95" y="0" width="19" height="26" fill="#065f46" stroke="#34d399"/><text x="104.5" y="17" fill="#a7f3d0">1</text><text x="104.5" y="38" fill="#34d399">5</text>
+    <rect x="114" y="0" width="19" height="26" fill="#1e293b" stroke="#475569"/><text x="123.5" y="17" fill="#64748b">0</text><text x="123.5" y="38" fill="#64748b">6</text>
+    <rect x="133" y="0" width="19" height="26" fill="#1e293b" stroke="#475569"/><text x="142.5" y="17" fill="#64748b">0</text><text x="142.5" y="38" fill="#64748b">7</text>
+
+    <!-- Jump arc from 0 to bit 2 -->
+    <path d="M 9.5 -2 Q 28.5 -18 47.5 -2" fill="none" stroke="#fbbf24" stroke-width="2" marker-end="url(#mY)"/>
+  </g>
+
+  <rect x="1152" y="172" width="140" height="84" rx="6" fill="#064e3b" stroke="#34d399"/>
+  <text x="1222" y="196" fill="#a7f3d0" font-size="13" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">@2 → 'T'</text>
+  <text x="1222" y="218" fill="#fff" font-size="13" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">100 + 2 = #102</text>
+  <text x="1222" y="242" fill="#fde68a" font-size="13" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">"CAT" ★</text>
+
+  <!-- Arrow 6A -> 6B -->
+  <line x1="1222" y1="274" x2="1222" y2="306" stroke="#34d399" stroke-width="2.5" marker-end="url(#mG)"/>
+
+  <!-- Slot 1: Jump to Bit 5 ('R') after clearing Bit 2 -->
+  <rect x="1138" y="310" width="168" height="204" rx="8" fill="#0f172a" stroke="#10b981" stroke-width="1.5"/>
+  <rect x="1138" y="310" width="168" height="24" rx="8" fill="#064e3b"/>
+  <text x="1222" y="326" fill="#a7f3d0" font-size="12" font-weight="700" text-anchor="middle">6B. Slot 1 (blsr + tzcnt)</text>
+
+  <g transform="translate(1146, 350)" font-family="Consolas, monospace" font-size="10.5" font-weight="700" text-anchor="middle">
+    <rect x="0" y="0" width="19" height="26" fill="#1e293b" stroke="#475569"/><text x="9.5" y="17" fill="#64748b">0</text><text x="9.5" y="38" fill="#64748b">0</text>
+    <rect x="19" y="0" width="19" height="26" fill="#1e293b" stroke="#475569"/><text x="28.5" y="17" fill="#64748b">0</text><text x="28.5" y="38" fill="#64748b">1</text>
+    <rect x="38" y="0" width="19" height="26" fill="#1e293b" stroke="#475569"/><text x="47.5" y="17" fill="#64748b">0</text><text x="47.5" y="38" fill="#64748b">2</text>
+    <rect x="57" y="0" width="19" height="26" fill="#1e293b" stroke="#475569"/><text x="66.5" y="17" fill="#64748b">0</text><text x="66.5" y="38" fill="#64748b">3</text>
+    <rect x="76" y="0" width="19" height="26" fill="#1e293b" stroke="#475569"/><text x="85.5" y="17" fill="#64748b">0</text><text x="85.5" y="38" fill="#64748b">4</text>
+    <rect x="95" y="0" width="19" height="26" fill="#10b981" stroke="#fff" stroke-width="1.8"/><text x="104.5" y="17" fill="#022c22">1</text><text x="104.5" y="38" fill="#34d399">5</text>
+    <rect x="114" y="0" width="19" height="26" fill="#1e293b" stroke="#475569"/><text x="123.5" y="17" fill="#64748b">0</text><text x="123.5" y="38" fill="#64748b">6</text>
+    <rect x="133" y="0" width="19" height="26" fill="#1e293b" stroke="#475569"/><text x="142.5" y="17" fill="#64748b">0</text><text x="142.5" y="38" fill="#64748b">7</text>
+
+    <!-- Jump arc from 0 to bit 5 -->
+    <path d="M 9.5 -2 Q 57 -22 104.5 -2" fill="none" stroke="#fbbf24" stroke-width="2" marker-end="url(#mY)"/>
+  </g>
+
+  <rect x="1152" y="412" width="140" height="84" rx="6" fill="#064e3b" stroke="#34d399"/>
+  <text x="1222" y="436" fill="#a7f3d0" font-size="13" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">@5 → 'R'</text>
+  <text x="1222" y="458" fill="#fff" font-size="13" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">100 + 1 = #101</text>
+  <text x="1222" y="482" fill="#fde68a" font-size="13" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">"CAR" ★</text>
+
+  <!-- Arrow Block 6 -> Block 7 -->
+  <line x1="1320" y1="280" x2="1344" y2="280" stroke="#c084fc" stroke-width="2.5" marker-end="url(#mP)"/>
+
+  <!-- =================================================================== -->
+  <!-- BLOCK 7: LEVEL 3 QUEUE & FOUND WORD VIEWS                           -->
+  <!-- =================================================================== -->
+  <rect x="1348" y="20" width="196" height="520" rx="10" fill="#1e293b" stroke="#c084fc" stroke-width="1.5"/>
+  <rect x="1348" y="20" width="196" height="32" rx="10" fill="#6d28d9"/>
+  <text x="1446" y="41" fill="#f5f3ff" font-size="13.5" font-weight="700" text-anchor="middle">7. Level 3 &amp; Output</text>
+
+  <!-- Sub-block 7A: Level 3 (3-Cell Paths) -->
+  <rect x="1362" y="66" width="168" height="196" rx="8" fill="#0f172a" stroke="#a855f7"/>
+  <rect x="1362" y="66" width="168" height="24" rx="8" fill="#4c1d95"/>
+  <text x="1446" y="82" fill="#e9d5ff" font-size="12" font-weight="700" text-anchor="middle">7A. Level 3 (3 Cells)</text>
+
+  <!-- Level 3 Item 1: #102 "CAT" @2 -->
+  <g transform="translate(1372, 102)" font-family="Consolas, monospace" font-size="10.5" font-weight="700" text-anchor="middle">
+    <rect x="0" y="0" width="66" height="36" rx="4" fill="#065f46" stroke="#34d399" stroke-width="1.8"/>
+    <text x="33" y="15" fill="#a7f3d0">#102 ★</text>
+    <text x="33" y="30" fill="#fff">"CAT"</text>
+    <rect x="70" y="0" width="32" height="36" rx="4" fill="#065f46" stroke="#34d399"/>
+    <text x="86" y="22" fill="#a7f3d0">@2</text>
+    <g transform="translate(110, 2)">
+      <rect x="0" y="0" width="8" height="8" fill="#a855f7"/><rect x="8" y="0" width="8" height="8" fill="#a855f7"/><rect x="16" y="0" width="8" height="8" fill="#34d399"/><rect x="24" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+    </g>
+  </g>
+
+  <!-- Level 3 Item 2: #101 "CAR" @5 -->
+  <g transform="translate(1372, 152)" font-family="Consolas, monospace" font-size="10.5" font-weight="700" text-anchor="middle">
+    <rect x="0" y="0" width="66" height="36" rx="4" fill="#065f46" stroke="#34d399" stroke-width="1.8"/>
+    <text x="33" y="15" fill="#a7f3d0">#101 ★</text>
+    <text x="33" y="30" fill="#fff">"CAR"</text>
+    <rect x="70" y="0" width="32" height="36" rx="4" fill="#065f46" stroke="#34d399"/>
+    <text x="86" y="22" fill="#a7f3d0">@5</text>
+    <g transform="translate(110, 2)">
+      <rect x="0" y="0" width="8" height="8" fill="#a855f7"/><rect x="8" y="0" width="8" height="8" fill="#a855f7"/><rect x="16" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="8" width="8" height="8" fill="#34d399"/><rect x="16" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+    </g>
+  </g>
+
+  <!-- Level 3 Item 3: #108 "TAR" @5 -->
+  <g transform="translate(1372, 202)" font-family="Consolas, monospace" font-size="10.5" font-weight="700" text-anchor="middle">
+    <rect x="0" y="0" width="66" height="36" rx="4" fill="#065f46" stroke="#34d399"/>
+    <text x="33" y="15" fill="#a7f3d0">#108 ★</text>
+    <text x="33" y="30" fill="#fff">"TAR"</text>
+    <rect x="70" y="0" width="32" height="36" rx="4" fill="#065f46" stroke="#34d399"/>
+    <text x="86" y="22" fill="#a7f3d0">@5</text>
+    <g transform="translate(110, 2)">
+      <rect x="0" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="0" width="8" height="8" fill="#a855f7"/><rect x="16" y="0" width="8" height="8" fill="#a855f7"/><rect x="24" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="8" width="8" height="8" fill="#34d399"/><rect x="16" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+    </g>
+  </g>
+
+  <!-- Arrow 7A -> 7B -->
+  <line x1="1446" y1="264" x2="1446" y2="292" stroke="#c084fc" stroke-width="2.5" marker-end="url(#mP)"/>
+
+  <!-- Sub-block 7B: Found Word Views -->
+  <rect x="1362" y="296" width="168" height="226" rx="8" fill="#0f172a" stroke="#c084fc" stroke-width="1.5"/>
+  <rect x="1362" y="296" width="168" height="24" rx="8" fill="#581c87"/>
+  <text x="1446" y="312" fill="#f5f3ff" font-size="12" font-weight="700" text-anchor="middle">7B. Word Views</text>
+
+  <!-- Trie Text Ribbon + Zero-Copy Pointers -->
+  <g transform="translate(1374, 336)" font-family="Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">
+    <rect x="0" y="0" width="144" height="32" rx="4" fill="#4c1d95" stroke="#c084fc"/>
+    <text x="72" y="21" fill="#fff">#102 → "CAT"</text>
+
+    <rect x="0" y="42" width="144" height="32" rx="4" fill="#4c1d95" stroke="#c084fc"/>
+    <text x="72" y="63" fill="#fff">#101 → "CAR"</text>
+
+    <rect x="0" y="84" width="144" height="32" rx="4" fill="#4c1d95" stroke="#c084fc"/>
+    <text x="72" y="105" fill="#fff">#108 → "TAR"</text>
+
+    <rect x="0" y="126" width="144" height="44" rx="5" fill="#064e3b" stroke="#34d399" stroke-width="1.5"/>
+    <text x="72" y="145" fill="#a7f3d0" font-size="11">[C|A|B|C|A|R|C|A|T]</text>
+    <text x="72" y="162" fill="#34d399" font-size="11">#101,#102 → 0</text>
+  </g>
+</svg>

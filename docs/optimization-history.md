@@ -4,6 +4,14 @@
 
 Historical measurements describe the implementation and test suite at each stage. See [benchmarking](benchmarking.md) for current benchmark modes and interpretation.
 
+## Visual summary of optimization methods
+
+![System architecture, memory layout, and multi-thread pipeline](../images/system_architecture.svg)
+
+![Single-board search pipeline and inner-loop optimizations](../images/search_pipeline.svg)
+
+![Step-by-step single-board solve walkthrough](../images/single_board_step_by_step.svg)
+
 - The benchmarks have been ran on a Windows 11 machine with an 13th Gen Intel(R) Core(TM) i9-13900HX (2.20 GHz).
 - The benchmarks ran use the `basic_english_words_2000.txt` word list file to build the dictionary (hard-coded).
 - The benchmarks repeats the benchmark fixture 50 times to determine the mean time.
