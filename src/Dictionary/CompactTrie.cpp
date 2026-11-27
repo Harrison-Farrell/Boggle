@@ -89,4 +89,22 @@ CompactTrie::CompactTrie(const Dictionary &dictionary,
         static_cast<uint32_t>(word.size());
     word_text_ += word;
   }
+
+  // Precompute the 2-letter lookup table (1,728 bytes, L1-resident) so the
+  // solver can jump straight to depth-2 paths across the 84 board edges.
+  for (uint32_t l0 = 0; l0 < Dictionary::ALPHABET_SIZE; ++l0) {
+    const int32_t n1 = GetNextNodeIndex(GetRootIndex(), l0);
+    if (n1 == -1) {
+      continue;
+    }
+    if (IsWord(n1)) {
+      has_depth1_words_ = true;
+    }
+    for (uint32_t l1 = 0; l1 < Dictionary::ALPHABET_SIZE; ++l1) {
+      const int32_t n2 = GetNextNodeIndex(n1, l1);
+      if (n2 != -1 && (IsWord(n2) || HasChildren(n2))) {
+        pair_nodes_[l0][l1] = static_cast<uint16_t>(n2);
+      }
+    }
+  }
 }

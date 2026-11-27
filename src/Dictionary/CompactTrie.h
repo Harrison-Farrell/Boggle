@@ -2,6 +2,7 @@
 #define COMPACT_TRIE_H
 
 // system includes
+#include <array>
 #include <bit>
 #include <cstdint>
 #include <string>
@@ -23,6 +24,20 @@ class CompactTrie {
 public:
   /// @brief Letter index that never has a child; use it for invalid cells
   static constexpr uint32_t INVALID_LETTER = Dictionary::ALPHABET_SIZE;
+
+  /// @brief Bit in Node::mask marking the end of a valid word
+  static constexpr uint32_t END_OF_WORD_BIT = 1U << 31;
+
+  /// @brief Padded stride of each row in the 2-letter lookup table
+  static constexpr size_t PAIR_TABLE_STRIDE = 32;
+
+  /// @brief Compact 8-byte trie node exposed for hot-loop pointer hoisting
+  struct Node {
+    // Bits 0-25: letters with a child. Bit 31: end of a word.
+    uint32_t mask = 0;
+    // Index of the child for the lowest set letter bit
+    uint32_t first_child = 0;
+  };
 
   /// @brief Builds the compact trie from a Dictionary
   /// @param dictionary The source dictionary (copied; later inserts are not
@@ -95,25 +110,45 @@ public:
   /// @brief Gets the number of nodes marked as words
   size_t GetTotalWords() const { return total_words_; }
 
+  /// @brief Direct read-only pointer to the contiguous 8-byte node array
+  const Node *GetNodesData() const { return nodes_.data(); }
+
+  /// @brief Direct read-only pointer to packed word spans ((offset << 8) | len)
+  const uint32_t *GetWordSpansData() const { return word_spans_.data(); }
+
+  /// @brief Direct read-only pointer to the flat word text buffer
+  const char *GetWordTextData() const { return word_text_.data(); }
+
+  /// @brief Gets the precomputed 2-letter lookup table indexed as [l0][l1]
+  /// @details Row and column INVALID_LETTER (26) are all zeros so invalid
+  /// board cells resolve to 0 without branching. Value 0 means no valid
+  /// depth-2 node (or a dead depth-2 leaf with no word and no children).
+  const std::array<uint16_t, PAIR_TABLE_STRIDE> *GetPairNodeTable() const {
+    return pair_nodes_.data();
+  }
+
+  /// @brief True if any 1-cell (depth-1) node is marked as a word
+  bool HasDepth1Words() const { return has_depth1_words_; }
+
 private:
-  static constexpr uint32_t END_OF_WORD_BIT = 1U << 31;
   static constexpr uint32_t CHILDREN_MASK =
       (1U << Dictionary::ALPHABET_SIZE) - 1;
 
-  struct Node {
-    // Bits 0-25: letters with a child. Bit 31: end of a word.
-    uint32_t mask = 0;
-    // Index of the child for the lowest set letter bit
-    uint32_t first_child = 0;
-  };
-
   std::vector<Node> nodes_;
   size_t total_words_ = 0;
+  bool has_depth1_words_ = false;
 
   // Words are only read when found, so they are kept out of the node array.
   // Each span packs (offset << 8) | length into 4 bytes.
   std::string word_text_;
   std::vector<uint32_t> word_spans_;
+
+  // Direct 2-letter node index table: pair_nodes_[l0][l1] gives the depth-2
+  // trie node index (always <= 702 in BFS order, fitting in uint16_t), or 0
+  // if that 2-letter prefix cannot lead to any word. Each 64-byte row fits in
+  // one cache line, and row/col 26 (INVALID_LETTER) are always 0.
+  alignas(64) std::array<std::array<uint16_t, PAIR_TABLE_STRIDE>,
+                         Dictionary::ALPHABET_SIZE + 1> pair_nodes_{};
 };
 
 #endif // COMPACT_TRIE_H

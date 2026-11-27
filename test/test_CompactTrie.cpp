@@ -151,3 +151,36 @@ TEST(CompactTrieTest, CountsOnlyMarkedWords) {
 
   EXPECT_EQ(trie.GetTotalWords(), 2U);
 }
+
+TEST(CompactTrieTest, PairNodeTableMapsValidTwoLetterPrefixesAndPrunesDead) {
+  Dictionary dictionary;
+  dictionary.Insert("AT");   // dead depth-2 leaf when min_word_length == 3
+  dictionary.Insert("CAR");
+  dictionary.Insert("QUA");  // depth-2 word (Q -> QU, + A -> 3 letters)
+  const CompactTrie trie(dictionary, 3);
+
+  EXPECT_FALSE(trie.HasDepth1Words());
+  const auto *pair_tbl = trie.GetPairNodeTable();
+
+  EXPECT_EQ(pair_tbl['C' - 'A']['A' - 'A'],
+            static_cast<uint16_t>(Walk(trie, "CA")));
+  EXPECT_EQ(pair_tbl['Q' - 'A']['A' - 'A'],
+            static_cast<uint16_t>(Walk(trie, "QA")));
+  // "AT" is neither a word nor has children when min_word_length == 3
+  EXPECT_EQ(pair_tbl['A' - 'A']['T' - 'A'], 0U);
+  // Missing prefix and INVALID_LETTER sentinel row/col always resolve to 0
+  EXPECT_EQ(pair_tbl['Z' - 'A']['Z' - 'A'], 0U);
+  EXPECT_EQ(pair_tbl[CompactTrie::INVALID_LETTER]['A' - 'A'], 0U);
+  EXPECT_EQ(pair_tbl['C' - 'A'][CompactTrie::INVALID_LETTER], 0U);
+}
+
+TEST(CompactTrieTest, HasDepth1WordsReflectsSingleLetterWords) {
+  Dictionary dictionary;
+  dictionary.Insert("A");
+  dictionary.Insert("ATE");
+  const CompactTrie trie_min1(dictionary, 1);
+  const CompactTrie trie_min3(dictionary, 3);
+
+  EXPECT_TRUE(trie_min1.HasDepth1Words());
+  EXPECT_FALSE(trie_min3.HasDepth1Words());
+}

@@ -319,6 +319,46 @@ TEST(BoggleSolverLogicTest, SolversCanShareATrie) {
   EXPECT_EQ(second.Solve(board), std::vector<std::string>{"TEA"});
 }
 
+TEST(BoggleSolverLogicTest, SupportsCustomTrieWithDepth1Words) {
+  auto dict = std::make_shared<Dictionary>();
+  dict->Insert("A");
+  dict->Insert("AT");
+  dict->Insert("ATE");
+  const auto trie = std::make_shared<const CompactTrie>(*dict, 1);
+  BoggleSolver solver(trie);
+
+  const std::array<char, BOARD_SIZE> board = {'A', 'T', 'E', '#', '#', '#',
+                                              '#', '#', '#', '#', '#', '#',
+                                              '#', '#', '#', '#'};
+  std::vector<std::string_view> views;
+  const auto owned = solver.Solve(board);
+  solver.SolveInto(board, views);
+  EXPECT_EQ(owned, (std::vector<std::string>{"A", "AT", "ATE"}));
+  EXPECT_EQ(views, (std::vector<std::string_view>{"A", "AT", "ATE"}));
+}
+
+TEST(BoggleSolverLogicTest, HandlesExtremeDuplicateWordHitsOnDenseBoard) {
+  auto dict = std::make_shared<Dictionary>();
+  dict->Insert("AAA");
+  dict->Insert("AAAA");
+  dict->Insert("AAAAA");
+  dict->Insert("AAAAAA");
+  BoggleSolver solver(dict);
+
+  // All-'A' board generates tens of thousands of candidate word hits, testing
+  // dynamic growth of found_word_nodes_ and deferred deduplication.
+  std::array<char, BOARD_SIZE> board{};
+  board.fill('A');
+  std::vector<std::string_view> views;
+  const auto owned = solver.Solve(board);
+  solver.SolveInto(board, views);
+  const std::vector<std::string> expected{"AAA", "AAAA", "AAAAA", "AAAAAA"};
+  EXPECT_EQ(owned, expected);
+  EXPECT_EQ(std::vector<std::string>(views.begin(), views.end()), expected);
+  // Second solve verifies all found_word_bits_ were cleared cleanly.
+  EXPECT_EQ(solver.Solve(board), expected);
+}
+
 TEST(BoggleSolverTest, PrecomputeCellsCorrectNeighbour) {
   auto dict = std::make_shared<Dictionary>();
   const BoggleSolver solver(dict);

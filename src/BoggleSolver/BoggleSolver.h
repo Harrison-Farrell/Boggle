@@ -127,31 +127,45 @@ private:
   void SolveImpl(const std::array<char, BOARD_SIZE> &board,
                  std::vector<Word> &found_words);
 
-  // A path on the board that spells a prefix in the trie.
-  // Packed into 8 bytes so each candidate write is a single 64-bit store.
-  struct PathState {
-    uint32_t node;    // trie node for the prefix the path spells
-    uint16_t cell;    // last cell of the path (0..15)
-    uint16_t visited; // bitmask of the cells on the path, including `cell`
+    // A path on the board that spells a prefix in the trie, packed into 64
+    // bits:
+    //   bits  0..31: trie node index
+    //   bits 32..47: last cell index (0..15)
+    //   bits 48..63: visited cell bitmask (16 bits)
+    // Packing into uint64_t guarantees every candidate write is a single 64-bit
+    // store instead of three narrow stores.
+    using PackedPath = uint64_t;
+
+    // Surviving non-dead path queued between the SIMD filter pass (Phase A) and
+    // the branchless 2-slot expansion pass (Phase B).
+    struct alignas(16) ActiveState {
+      uint32_t mask;        // raw CompactTrie node mask (children + word bit)
+      uint32_t first_child; // index of the node's first child
+      uint32_t visited;     // 16-bit visited cell bitmask
+      uint32_t keep;        // non-zero 16-bit bitmask of matching neighbours
+    };
+
+    // Read-only, so one trie can be shared by solvers on several threads
+    std::shared_ptr<const CompactTrie> trie_;
+
+    // Paths of the current length, and the paths one cell longer built from
+    // them. Kept between solves so their capacity is reused.
+    std::vector<PackedPath> level_;
+    std::vector<PackedPath> next_level_;
+
+    // Surviving paths (keep != 0) passed from Phase A to Phase B within a
+    // level.
+    std::vector<ActiveState> active_;
+
+    // One bit per trie node, set during post-search deduplication so each found
+    // word is listed once. Only the 64-bit blocks touched by found words are
+    // cleared at the end of each solve.
+    std::vector<uint64_t> found_word_bits_;
+
+    // Candidate word nodes recorded branchlessly during search (duplicates are
+    // filtered out after the search). Grows on demand if a board exceeds 1024
+    // word hits.
+    std::vector<uint32_t> found_word_nodes_;
   };
-
-  // Read-only, so one trie can be shared by solvers on several threads
-  std::shared_ptr<const CompactTrie> trie_;
-
-  // Paths of the current length, and the paths one cell longer built from
-  // them. Kept between solves so their capacity is reused.
-  std::vector<PathState> level_;
-  std::vector<PathState> next_level_;
-
-  // One bit per trie node, set once its word is found on the current board
-  // so a word reached by two paths is listed once. Only the bits of found
-  // words are set, and they are cleared at the end of each solve.
-  std::vector<uint64_t> found_word_bits_;
-
-  // Trie nodes of the words found on the current board, in the order found.
-  // One entry per dictionary word, plus one because a slot is written for
-  // every word node visited, whether or not it is new.
-  std::vector<uint32_t> found_word_nodes_;
-};
 
 #endif // BOGGLE_SOLVER_H

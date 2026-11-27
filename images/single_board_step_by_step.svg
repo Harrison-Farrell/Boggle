@@ -1,8 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1560 560" width="100%" height="100%" font-family="'Segoe UI', Inter, system-ui, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 1560" width="100%" height="100%" font-family="'Segoe UI', Inter, system-ui, sans-serif">
   <defs>
-    <linearGradient id="bg3" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0f172a"/>
-      <stop offset="100%" stop-color="#1e293b"/>
+    <linearGradient id="bgMain" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0b1220"/>
+      <stop offset="100%" stop-color="#111a2c"/>
+    </linearGradient>
+    <linearGradient id="hdrGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#0f2942"/>
+      <stop offset="55%" stop-color="#162847"/>
+      <stop offset="100%" stop-color="#0c3430"/>
     </linearGradient>
     <marker id="mC" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto">
       <path d="M 0 1 L 10 5 L 0 9 z" fill="#38bdf8"/>
@@ -16,582 +21,918 @@
     <marker id="mP" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto">
       <path d="M 0 1 L 10 5 L 0 9 z" fill="#c084fc"/>
     </marker>
+    <marker id="mR" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#f87171"/>
+    </marker>
+    <marker id="mS" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#64748b"/>
+    </marker>
   </defs>
 
   <!-- Canvas -->
-  <rect width="1560" height="560" rx="14" fill="url(#bg3)" stroke="#334155" stroke-width="2"/>
+  <rect width="1280" height="1560" rx="14" fill="url(#bgMain)" stroke="#263449" stroke-width="2"/>
 
   <!-- =================================================================== -->
-  <!-- BLOCK 1: 4x4 BOARD                                                  -->
+  <!-- TOP HEADER + QUIET LEGEND                                           -->
   <!-- =================================================================== -->
-  <rect x="16" y="20" width="184" height="520" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
-  <rect x="16" y="20" width="184" height="32" rx="10" fill="#0369a1"/>
-  <text x="108" y="41" fill="#f8fafc" font-size="13.5" font-weight="700" text-anchor="middle">1. 4×4 Board</text>
+  <rect x="20" y="16" width="1240" height="60" rx="10" fill="url(#hdrGrad)" stroke="#2a4365" stroke-width="1.2"/>
+  <text x="40" y="42" fill="#f8fafc" font-size="19" font-weight="700">Single-Board Solve — Step-by-Step Visual Walkthrough</text>
+  <text x="40" y="63" fill="#94a3b8" font-size="12">Board: C A T S / Q R E D / N O P L / M I K B   ·   Tracing prefix "CA" (#45) → "CAT" (#102) &amp; "CAR" (#101)</text>
 
-  <!-- 4x4 Letter Grid (C A T S / Q R E D / N O P L / M I K B) -->
-  <g transform="translate(32, 76)" font-family="Consolas, monospace" font-size="16" font-weight="700" text-anchor="middle">
+  <!-- Quiet Dot Legend -->
+  <g transform="translate(808, 41)" font-size="12" font-weight="600">
+    <circle cx="0" cy="4" r="5" fill="#38bdf8"/><text x="12" y="8" fill="#cbd5e1">SIMD / Input</text>
+    <circle cx="112" cy="4" r="5" fill="#fbbf24"/><text x="124" y="8" fill="#cbd5e1">Index / Bit Ops</text>
+    <circle cx="238" cy="4" r="5" fill="#34d399"/><text x="250" y="8" fill="#cbd5e1">Match / Keep</text>
+    <circle cx="352" cy="4" r="5" fill="#f87171"/><text x="364" y="8" fill="#cbd5e1">Pruned / Dup</text>
+  </g>
+
+  <!-- =================================================================== -->
+  <!-- STAGE 1: BOARD PREP & DIRECT DEPTH-2 SEED (y=92..484)               -->
+  <!-- =================================================================== -->
+  <rect x="20" y="92" width="1240" height="392" rx="12" fill="#111a2c" stroke="#263449" stroke-width="1.4"/>
+  <circle cx="42" cy="113" r="5" fill="#38bdf8"/>
+  <text x="56" y="118" fill="#e2e8f0" font-size="13" font-weight="700" letter-spacing="0.5">STAGE 1 · PREPARE BOARD ONCE &amp; SEED LEVEL-2 QUEUE</text>
+  <line x1="36" y1="130" x2="1244" y2="130" stroke="#1e293b" stroke-width="1.5"/>
+
+  <!-- ................................................................... -->
+  <!-- CARD 1: 4x4 BOARD + CELL INDICES + 16-BYTE XMM LOAD (x=36..328)     -->
+  <!-- ................................................................... -->
+  <rect x="36" y="140" width="292" height="330" rx="10" fill="#0d1526" stroke="#1f2f46" stroke-width="1.2"/>
+  <text x="182" y="162" fill="#7dd3fc" font-size="13.5" font-weight="700" text-anchor="middle">1. 4×4 Board → 16-Byte XMM</text>
+
+  <!-- Unified 4x4 Board: corner bit index 0..15 + bold letter -->
+  <g transform="translate(84, 174)" font-family="Consolas, monospace" font-weight="700">
     <!-- Row 0 -->
-    <rect x="0" y="0" width="35" height="35" rx="4" fill="#1e3a8a" stroke="#60a5fa" stroke-width="2"/>
-    <text x="17.5" y="23" fill="#fff">C</text>
-    <rect x="39" y="0" width="35" height="35" rx="4" fill="#0284c7" stroke="#bae6fd" stroke-width="2"/>
-    <text x="56.5" y="23" fill="#fff">A</text>
-    <rect x="78" y="0" width="35" height="35" rx="4" fill="#065f46" stroke="#34d399" stroke-width="2"/>
-    <text x="95.5" y="23" fill="#a7f3d0">T</text>
-    <rect x="117" y="0" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/>
-    <text x="134.5" y="23" fill="#94a3b8">S</text>
+    <rect x="0" y="0" width="46" height="46" rx="5" fill="#1e3a8a" stroke="#60a5fa" stroke-width="2"/>
+    <text x="5" y="12" fill="#93c5fd" font-size="9.5">0</text><text x="23" y="33" fill="#fff" font-size="20" text-anchor="middle">C</text>
+
+    <rect x="50" y="0" width="46" height="46" rx="5" fill="#0284c7" stroke="#bae6fd" stroke-width="2"/>
+    <text x="55" y="12" fill="#e0f2fe" font-size="9.5">1</text><text x="73" y="33" fill="#fff" font-size="20" text-anchor="middle">A</text>
+
+    <rect x="100" y="0" width="46" height="46" rx="5" fill="#065f46" stroke="#34d399" stroke-width="2"/>
+    <text x="105" y="12" fill="#6ee7b7" font-size="9.5">2</text><text x="123" y="33" fill="#ecfdf5" font-size="20" text-anchor="middle">T</text>
+
+    <rect x="150" y="0" width="46" height="46" rx="5" fill="#172133" stroke="#334155"/>
+    <text x="155" y="12" fill="#64748b" font-size="9.5">3</text><text x="173" y="33" fill="#94a3b8" font-size="20" text-anchor="middle">S</text>
+
     <!-- Row 1 -->
-    <rect x="0" y="39" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/>
-    <text x="17.5" y="62" fill="#94a3b8">Q</text>
-    <rect x="39" y="39" width="35" height="35" rx="4" fill="#065f46" stroke="#34d399" stroke-width="2"/>
-    <text x="56.5" y="62" fill="#a7f3d0">R</text>
-    <rect x="78" y="39" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/>
-    <text x="95.5" y="62" fill="#94a3b8">E</text>
-    <rect x="117" y="39" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/>
-    <text x="134.5" y="62" fill="#94a3b8">D</text>
+    <rect x="0" y="50" width="46" height="46" rx="5" fill="#172133" stroke="#334155"/>
+    <text x="5" y="62" fill="#64748b" font-size="9.5">4</text><text x="23" y="83" fill="#94a3b8" font-size="20" text-anchor="middle">Q</text>
+
+    <rect x="50" y="50" width="46" height="46" rx="5" fill="#065f46" stroke="#34d399" stroke-width="2"/>
+    <text x="55" y="62" fill="#6ee7b7" font-size="9.5">5</text><text x="73" y="83" fill="#ecfdf5" font-size="20" text-anchor="middle">R</text>
+
+    <rect x="100" y="50" width="46" height="46" rx="5" fill="#172133" stroke="#334155"/>
+    <text x="105" y="62" fill="#64748b" font-size="9.5">6</text><text x="123" y="83" fill="#94a3b8" font-size="20" text-anchor="middle">E</text>
+
+    <rect x="150" y="50" width="46" height="46" rx="5" fill="#172133" stroke="#334155"/>
+    <text x="155" y="62" fill="#64748b" font-size="9.5">7</text><text x="173" y="83" fill="#94a3b8" font-size="20" text-anchor="middle">D</text>
+
     <!-- Row 2 -->
-    <rect x="0" y="78" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/>
-    <text x="17.5" y="101" fill="#64748b">N</text>
-    <rect x="39" y="78" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/>
-    <text x="56.5" y="101" fill="#64748b">O</text>
-    <rect x="78" y="78" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/>
-    <text x="95.5" y="101" fill="#64748b">P</text>
-    <rect x="117" y="78" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/>
-    <text x="134.5" y="101" fill="#64748b">L</text>
+    <rect x="0" y="100" width="46" height="46" rx="5" fill="#172133" stroke="#334155"/>
+    <text x="5" y="112" fill="#475569" font-size="9.5">8</text><text x="23" y="133" fill="#64748b" font-size="20" text-anchor="middle">N</text>
+
+    <rect x="50" y="100" width="46" height="46" rx="5" fill="#172133" stroke="#334155"/>
+    <text x="55" y="112" fill="#475569" font-size="9.5">9</text><text x="73" y="133" fill="#64748b" font-size="20" text-anchor="middle">O</text>
+
+    <rect x="100" y="100" width="46" height="46" rx="5" fill="#172133" stroke="#334155"/>
+    <text x="105" y="112" fill="#475569" font-size="9.5">10</text><text x="123" y="133" fill="#64748b" font-size="20" text-anchor="middle">P</text>
+
+    <rect x="150" y="100" width="46" height="46" rx="5" fill="#172133" stroke="#334155"/>
+    <text x="155" y="112" fill="#475569" font-size="9.5">11</text><text x="173" y="133" fill="#64748b" font-size="20" text-anchor="middle">L</text>
+
     <!-- Row 3 -->
-    <rect x="0" y="117" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/>
-    <text x="17.5" y="140" fill="#64748b">M</text>
-    <rect x="39" y="117" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/>
-    <text x="56.5" y="140" fill="#64748b">I</text>
-    <rect x="78" y="117" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/>
-    <text x="95.5" y="140" fill="#64748b">K</text>
-    <rect x="117" y="117" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/>
-    <text x="134.5" y="140" fill="#64748b">B</text>
+    <rect x="0" y="150" width="46" height="46" rx="5" fill="#172133" stroke="#334155"/>
+    <text x="5" y="162" fill="#475569" font-size="9.5">12</text><text x="23" y="183" fill="#64748b" font-size="20" text-anchor="middle">M</text>
 
-    <!-- Path overlay arrows: C(0) -> A(1) -> T(2) and A(1) -> R(5) -->
-    <line x1="28" y1="17.5" x2="44" y2="17.5" stroke="#fbbf24" stroke-width="2.5" marker-end="url(#mY)"/>
-    <line x1="68" y1="17.5" x2="84" y2="17.5" stroke="#34d399" stroke-width="2.5" marker-end="url(#mG)"/>
-    <line x1="56.5" y1="29" x2="56.5" y2="45" stroke="#34d399" stroke-width="2.5" marker-end="url(#mG)"/>
+    <rect x="50" y="150" width="46" height="46" rx="5" fill="#172133" stroke="#334155"/>
+    <text x="55" y="162" fill="#475569" font-size="9.5">13</text><text x="73" y="183" fill="#64748b" font-size="20" text-anchor="middle">I</text>
+
+    <rect x="100" y="150" width="46" height="46" rx="5" fill="#172133" stroke="#334155"/>
+    <text x="105" y="162" fill="#475569" font-size="9.5">14</text><text x="123" y="183" fill="#64748b" font-size="20" text-anchor="middle">K</text>
+
+    <rect x="150" y="150" width="46" height="46" rx="5" fill="#0c4a6e" stroke="#38bdf8" stroke-width="1.6"/>
+    <text x="155" y="162" fill="#7dd3fc" font-size="9.5">15</text><text x="173" y="183" fill="#e0f2fe" font-size="20" text-anchor="middle">B</text>
+
+    <!-- Path arrows: C(0)->A(1)->T(2) & A(1)->R(5) -->
+    <line x1="39" y1="24" x2="54" y2="24" stroke="#fbbf24" stroke-width="2.8" marker-end="url(#mY)"/>
+    <line x1="89" y1="24" x2="104" y2="24" stroke="#34d399" stroke-width="2.8" marker-end="url(#mG)"/>
+    <line x1="73" y1="41" x2="73" y2="55" stroke="#34d399" stroke-width="2.8" marker-end="url(#mG)"/>
   </g>
 
-  <!-- 4x4 Cell Index Grid (0..15) -->
-  <g transform="translate(32, 286)" font-family="Consolas, monospace" font-size="13" font-weight="700" text-anchor="middle">
-    <rect x="0" y="0" width="35" height="35" rx="4" fill="#1e3a8a" stroke="#60a5fa"/><text x="17.5" y="22" fill="#93c5fd">0</text>
-    <rect x="39" y="0" width="35" height="35" rx="4" fill="#0284c7" stroke="#bae6fd"/><text x="56.5" y="22" fill="#e0f2fe">1</text>
-    <rect x="78" y="0" width="35" height="35" rx="4" fill="#065f46" stroke="#34d399"/><text x="95.5" y="22" fill="#a7f3d0">2</text>
-    <rect x="117" y="0" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/><text x="134.5" y="22" fill="#64748b">3</text>
+  <!-- Arrow down to 16-byte flat XMM ribbon -->
+  <line x1="182" y1="376" x2="182" y2="400" stroke="#38bdf8" stroke-width="2" marker-end="url(#mC)"/>
 
-    <rect x="0" y="39" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/><text x="17.5" y="61" fill="#64748b">4</text>
-    <rect x="39" y="39" width="35" height="35" rx="4" fill="#065f46" stroke="#34d399"/><text x="56.5" y="61" fill="#a7f3d0">5</text>
-    <rect x="78" y="39" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/><text x="95.5" y="61" fill="#64748b">6</text>
-    <rect x="117" y="39" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/><text x="134.5" y="61" fill="#64748b">7</text>
+  <!-- 16-byte XMM ribbon -->
+  <g transform="translate(50, 405)" font-family="Consolas, monospace" font-size="11" font-weight="700" text-anchor="middle">
+    <rect x="0" y="0" width="16.5" height="26" fill="#1e3a8a" stroke="#60a5fa"/><text x="8.25" y="17" fill="#fff">C</text>
+    <rect x="16.5" y="0" width="16.5" height="26" fill="#0284c7" stroke="#bae6fd"/><text x="24.75" y="17" fill="#fff">A</text>
+    <rect x="33" y="0" width="16.5" height="26" fill="#065f46" stroke="#34d399"/><text x="41.25" y="17" fill="#a7f3d0">T</text>
+    <rect x="49.5" y="0" width="16.5" height="26" fill="#172133" stroke="#334155"/><text x="57.75" y="17" fill="#94a3b8">S</text>
+    <rect x="66" y="0" width="16.5" height="26" fill="#172133" stroke="#334155"/><text x="74.25" y="17" fill="#94a3b8">Q</text>
+    <rect x="82.5" y="0" width="16.5" height="26" fill="#065f46" stroke="#34d399"/><text x="90.75" y="17" fill="#a7f3d0">R</text>
+    <rect x="99" y="0" width="16.5" height="26" fill="#172133" stroke="#334155"/><text x="107.25" y="17" fill="#94a3b8">E</text>
+    <rect x="115.5" y="0" width="16.5" height="26" fill="#172133" stroke="#334155"/><text x="123.75" y="17" fill="#94a3b8">D</text>
+    <rect x="132" y="0" width="16.5" height="26" fill="#172133" stroke="#334155"/><text x="140.25" y="17" fill="#64748b">N</text>
+    <rect x="148.5" y="0" width="16.5" height="26" fill="#172133" stroke="#334155"/><text x="156.75" y="17" fill="#64748b">O</text>
+    <rect x="165" y="0" width="16.5" height="26" fill="#172133" stroke="#334155"/><text x="173.25" y="17" fill="#64748b">P</text>
+    <rect x="181.5" y="0" width="16.5" height="26" fill="#172133" stroke="#334155"/><text x="189.75" y="17" fill="#64748b">L</text>
+    <rect x="198" y="0" width="16.5" height="26" fill="#172133" stroke="#334155"/><text x="206.25" y="17" fill="#64748b">M</text>
+    <rect x="214.5" y="0" width="16.5" height="26" fill="#172133" stroke="#334155"/><text x="222.75" y="17" fill="#64748b">I</text>
+    <rect x="231" y="0" width="16.5" height="26" fill="#172133" stroke="#334155"/><text x="239.25" y="17" fill="#64748b">K</text>
+    <rect x="247.5" y="0" width="16.5" height="26" fill="#0c4a6e" stroke="#38bdf8"/><text x="255.75" y="17" fill="#e0f2fe">B</text>
+  </g>
+  <text x="182" y="454" fill="#7dd3fc" font-size="11" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">_mm_loadu_si128  (1 load = 16 tiles)</text>
 
-    <rect x="0" y="78" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/><text x="17.5" y="100" fill="#475569">8</text>
-    <rect x="39" y="78" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/><text x="56.5" y="100" fill="#475569">9</text>
-    <rect x="78" y="78" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/><text x="95.5" y="100" fill="#475569">10</text>
-    <rect x="117" y="78" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/><text x="134.5" y="100" fill="#475569">11</text>
+  <!-- Arrow Card 1 -> Card 2 -->
+  <line x1="328" y1="305" x2="352" y2="305" stroke="#38bdf8" stroke-width="2.4" marker-end="url(#mC)"/>
 
-    <rect x="0" y="117" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/><text x="17.5" y="139" fill="#475569">12</text>
-    <rect x="39" y="117" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/><text x="56.5" y="139" fill="#475569">13</text>
-    <rect x="78" y="117" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/><text x="95.5" y="139" fill="#475569">14</text>
-    <rect x="117" y="117" width="35" height="35" rx="4" fill="#0f172a" stroke="#475569"/><text x="134.5" y="139" fill="#475569">15</text>
+  <!-- ................................................................... -->
+  <!-- CARD 2: SIMD PREP — NORMALIZE, 5-BIT SPLIT & XMM TABLE (x=356..848) -->
+  <!-- ................................................................... -->
+  <rect x="356" y="140" width="492" height="330" rx="10" fill="#0d1526" stroke="#1f2f46" stroke-width="1.2"/>
+  <text x="602" y="162" fill="#7dd3fc" font-size="13.5" font-weight="700" text-anchor="middle">2. SIMD Prep — Normalize &amp; Split 5-Bit Letters (16 Lanes)</text>
+
+  <!-- Left Top: Clear bit 5 & clamp invalid -->
+  <g transform="translate(372, 176)" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">
+    <text x="105" y="11" fill="#94a3b8" font-size="11" font-family="'Segoe UI', Inter, sans-serif">Clear bit 5 &amp; clamp invalid</text>
+    <rect x="0" y="20" width="38" height="24" rx="4" fill="#172133" stroke="#475569"/><text x="19" y="36" fill="#cbd5e1" font-size="11.5">'c'</text>
+    <rect x="43" y="20" width="38" height="24" rx="4" fill="#172133" stroke="#475569"/><text x="62" y="36" fill="#cbd5e1" font-size="11.5">'A'</text>
+    <rect x="86" y="20" width="38" height="24" rx="4" fill="#172133" stroke="#475569"/><text x="105" y="36" fill="#cbd5e1" font-size="11.5">'t'</text>
+    <rect x="129" y="20" width="38" height="24" rx="4" fill="#172133" stroke="#475569"/><text x="148" y="36" fill="#cbd5e1" font-size="11.5">'r'</text>
+    <rect x="172" y="20" width="38" height="24" rx="4" fill="#3f1219" stroke="#f87171"/><text x="191" y="36" fill="#fca5a5" font-size="11.5">'?'</text>
+
+    <line x1="19" y1="44" x2="19" y2="52" stroke="#38bdf8" stroke-width="1.5"/>
+    <line x1="62" y1="44" x2="62" y2="52" stroke="#38bdf8" stroke-width="1.5"/>
+    <line x1="105" y1="44" x2="105" y2="52" stroke="#38bdf8" stroke-width="1.5"/>
+    <line x1="148" y1="44" x2="148" y2="52" stroke="#38bdf8" stroke-width="1.5"/>
+    <line x1="191" y1="44" x2="191" y2="52" stroke="#f87171" stroke-width="1.5"/>
+
+    <rect x="0" y="53" width="210" height="24" rx="5" fill="#142645" stroke="#38bdf8"/>
+    <text x="105" y="69" fill="#7dd3fc" font-size="10.5">(&amp; ~0x20) − 'A' → min_epu8(26)</text>
+
+    <line x1="19" y1="77" x2="19" y2="90" stroke="#38bdf8" stroke-width="1.5" marker-end="url(#mC)"/>
+    <line x1="62" y1="77" x2="62" y2="90" stroke="#38bdf8" stroke-width="1.5" marker-end="url(#mC)"/>
+    <line x1="105" y1="77" x2="105" y2="90" stroke="#34d399" stroke-width="1.5" marker-end="url(#mG)"/>
+    <line x1="148" y1="77" x2="148" y2="90" stroke="#34d399" stroke-width="1.5" marker-end="url(#mG)"/>
+    <line x1="191" y1="77" x2="191" y2="90" stroke="#f87171" stroke-width="1.5" marker-end="url(#mR)"/>
+
+    <rect x="0" y="94" width="38" height="24" rx="4" fill="#1e3a8a" stroke="#60a5fa"/><text x="19" y="110" fill="#fff" font-size="11.5">2</text>
+    <rect x="43" y="94" width="38" height="24" rx="4" fill="#0284c7" stroke="#bae6fd"/><text x="62" y="110" fill="#fff" font-size="11.5">0</text>
+    <rect x="86" y="94" width="38" height="24" rx="4" fill="#065f46" stroke="#34d399"/><text x="105" y="110" fill="#a7f3d0" font-size="11.5">19</text>
+    <rect x="129" y="94" width="38" height="24" rx="4" fill="#065f46" stroke="#34d399"/><text x="148" y="110" fill="#a7f3d0" font-size="11.5">17</text>
+    <rect x="172" y="94" width="38" height="24" rx="4" fill="#7f1d1d" stroke="#f87171"/><text x="191" y="110" fill="#fee2e2" font-size="11">26✕</text>
   </g>
 
-  <!-- Arrow Block 1 -> Block 2 -->
-  <line x1="200" y1="280" x2="224" y2="280" stroke="#38bdf8" stroke-width="2.5" marker-end="url(#mC)"/>
+  <!-- Subtle vertical divider -->
+  <line x1="596" y1="176" x2="596" y2="298" stroke="#1e293b" stroke-width="1.5"/>
 
-  <!-- =================================================================== -->
-  <!-- BLOCK 2: 16-LANE SIMD REGISTER                                      -->
-  <!-- =================================================================== -->
-  <rect x="228" y="20" width="164" height="520" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
-  <rect x="228" y="20" width="164" height="32" rx="10" fill="#0369a1"/>
-  <text x="310" y="41" fill="#f8fafc" font-size="13.5" font-weight="700" text-anchor="middle">2. 16-Lane SIMD</text>
+  <!-- Right Top: 5-bit split for 'T' = 19 -->
+  <g transform="translate(610, 176)" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">
+    <text x="112" y="11" fill="#a7f3d0" font-size="11" font-family="'Segoe UI', Inter, sans-serif">5-bit split: @2 'T' = 19 (10011₂)</text>
+    <!-- 5 bits -->
+    <rect x="26" y="18" width="30" height="26" rx="4" fill="#78350f" stroke="#fbbf24" stroke-width="1.6"/><text x="41" y="36" fill="#fef3c7" font-size="13.5">1</text>
+    <rect x="60" y="18" width="30" height="26" rx="4" fill="#78350f" stroke="#fbbf24" stroke-width="1.6"/><text x="75" y="36" fill="#fef3c7" font-size="13.5">0</text>
+    <line x1="97" y1="16" x2="97" y2="46" stroke="#64748b" stroke-width="1.5" stroke-dasharray="3,2"/>
+    <rect x="104" y="18" width="30" height="26" rx="4" fill="#0c4a6e" stroke="#38bdf8" stroke-width="1.6"/><text x="119" y="36" fill="#e0f2fe" font-size="13.5">0</text>
+    <rect x="138" y="18" width="30" height="26" rx="4" fill="#0c4a6e" stroke="#38bdf8" stroke-width="1.6"/><text x="153" y="36" fill="#e0f2fe" font-size="13.5">1</text>
+    <rect x="172" y="18" width="30" height="26" rx="4" fill="#0c4a6e" stroke="#38bdf8" stroke-width="1.6"/><text x="187" y="36" fill="#e0f2fe" font-size="13.5">1</text>
 
-  <!-- 16 Vertical Lanes: index -> lowercase -> uppercase -> bitmask -->
-  <g transform="translate(242, 68)" font-family="Consolas, monospace" font-size="11.5" font-weight="700" text-anchor="middle">
-    <!-- Lane 0: C -->
-    <rect x="0" y="0" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="16" fill="#64748b">0</text>
-    <rect x="28" y="0" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="16" fill="#94a3b8">c</text>
-    <text x="68" y="16" fill="#38bdf8">→</text>
-    <rect x="80" y="0" width="28" height="24" fill="#1e3a8a" stroke="#60a5fa"/><text x="94" y="16" fill="#fff">C</text>
-    <rect x="112" y="0" width="24" height="24" fill="#065f46" stroke="#34d399"/><text x="124" y="16" fill="#34d399">2</text>
+    <!-- Split wires with =2 / =3 -->
+    <path d="M 58 44 L 58 55 L 48 55 L 48 63" fill="none" stroke="#fbbf24" stroke-width="2" marker-end="url(#mY)"/>
+    <text x="72" y="58" fill="#fde68a" font-size="10">=2</text>
+    <path d="M 153 44 L 153 55 L 166 55 L 166 63" fill="none" stroke="#38bdf8" stroke-width="2" marker-end="url(#mC)"/>
+    <text x="137" y="58" fill="#7dd3fc" font-size="10">=3</text>
 
-    <!-- Lane 1: A -->
-    <rect x="0" y="28" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="44" fill="#64748b">1</text>
-    <rect x="28" y="28" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="44" fill="#94a3b8">a</text>
-    <text x="68" y="44" fill="#38bdf8">→</text>
-    <rect x="80" y="28" width="28" height="24" fill="#0284c7" stroke="#bae6fd"/><text x="94" y="44" fill="#fff">A</text>
-    <rect x="112" y="28" width="24" height="24" fill="#065f46" stroke="#34d399"/><text x="124" y="44" fill="#34d399">0</text>
+    <!-- byte_sel box -->
+    <rect x="0" y="67" width="104" height="54" rx="6" fill="#162032" stroke="#b45309"/>
+    <text x="52" y="81" fill="#fde68a" font-size="10">byte_sel (&gt;&gt;3)</text>
+    <rect x="8" y="87" width="20" height="17" fill="#0d1526" stroke="#334155"/><text x="18" y="99" fill="#64748b" font-size="9">B0</text>
+    <rect x="30" y="87" width="20" height="17" fill="#0d1526" stroke="#334155"/><text x="40" y="99" fill="#64748b" font-size="9">B1</text>
+    <rect x="52" y="87" width="20" height="17" fill="#b45309" stroke="#fbbf24" stroke-width="1.5"/><text x="62" y="99" fill="#fff" font-size="9">B2</text>
+    <rect x="74" y="87" width="20" height="17" fill="#0d1526" stroke="#334155"/><text x="84" y="99" fill="#64748b" font-size="9">B3</text>
+    <text x="52" y="116" fill="#fbbf24" font-size="9.5">Byte 2 (Q..X)</text>
 
-    <!-- Lane 2: T -->
-    <rect x="0" y="56" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="72" fill="#64748b">2</text>
-    <rect x="28" y="56" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="72" fill="#94a3b8">t</text>
-    <text x="68" y="72" fill="#38bdf8">→</text>
-    <rect x="80" y="56" width="28" height="24" fill="#065f46" stroke="#34d399"/><text x="94" y="72" fill="#a7f3d0">T</text>
-    <rect x="112" y="56" width="24" height="24" fill="#065f46" stroke="#34d399"/><text x="124" y="72" fill="#34d399">19</text>
-
-    <!-- Lane 3: S -->
-    <rect x="0" y="84" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="100" fill="#64748b">3</text>
-    <rect x="28" y="84" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="100" fill="#94a3b8">s</text>
-    <text x="68" y="100" fill="#38bdf8">→</text>
-    <rect x="80" y="84" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="94" y="100" fill="#cbd5e1">S</text>
-    <rect x="112" y="84" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="124" y="100" fill="#94a3b8">18</text>
-
-    <!-- Lane 4: Q -->
-    <rect x="0" y="112" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="128" fill="#64748b">4</text>
-    <rect x="28" y="112" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="128" fill="#94a3b8">q</text>
-    <text x="68" y="128" fill="#38bdf8">→</text>
-    <rect x="80" y="112" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="94" y="128" fill="#cbd5e1">Q</text>
-    <rect x="112" y="112" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="124" y="128" fill="#94a3b8">16</text>
-
-    <!-- Lane 5: R -->
-    <rect x="0" y="140" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="156" fill="#64748b">5</text>
-    <rect x="28" y="140" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="156" fill="#94a3b8">r</text>
-    <text x="68" y="156" fill="#38bdf8">→</text>
-    <rect x="80" y="140" width="28" height="24" fill="#065f46" stroke="#34d399"/><text x="94" y="156" fill="#a7f3d0">R</text>
-    <rect x="112" y="140" width="24" height="24" fill="#065f46" stroke="#34d399"/><text x="124" y="156" fill="#34d399">17</text>
-
-    <!-- Lane 6: E -->
-    <rect x="0" y="168" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="184" fill="#64748b">6</text>
-    <rect x="28" y="168" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="184" fill="#94a3b8">e</text>
-    <text x="68" y="184" fill="#38bdf8">→</text>
-    <rect x="80" y="168" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="94" y="184" fill="#cbd5e1">E</text>
-    <rect x="112" y="168" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="124" y="184" fill="#94a3b8">4</text>
-
-    <!-- Lane 7: D -->
-    <rect x="0" y="196" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="212" fill="#64748b">7</text>
-    <rect x="28" y="196" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="212" fill="#94a3b8">d</text>
-    <text x="68" y="212" fill="#38bdf8">→</text>
-    <rect x="80" y="196" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="94" y="212" fill="#cbd5e1">D</text>
-    <rect x="112" y="196" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="124" y="212" fill="#94a3b8">3</text>
-
-    <!-- Lanes 8..14 -->
-    <rect x="0" y="224" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="240" fill="#64748b">8</text>
-    <rect x="28" y="224" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="240" fill="#64748b">n</text>
-    <text x="68" y="240" fill="#38bdf8">→</text>
-    <rect x="80" y="224" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="94" y="240" fill="#64748b">N</text>
-    <rect x="112" y="224" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="124" y="240" fill="#64748b">13</text>
-
-    <rect x="0" y="252" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="268" fill="#64748b">9</text>
-    <rect x="28" y="252" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="268" fill="#64748b">o</text>
-    <text x="68" y="268" fill="#38bdf8">→</text>
-    <rect x="80" y="252" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="94" y="268" fill="#64748b">O</text>
-    <rect x="112" y="252" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="124" y="268" fill="#64748b">14</text>
-
-    <rect x="0" y="280" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="296" fill="#64748b">10</text>
-    <rect x="28" y="280" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="296" fill="#64748b">p</text>
-    <text x="68" y="296" fill="#38bdf8">→</text>
-    <rect x="80" y="280" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="94" y="296" fill="#64748b">P</text>
-    <rect x="112" y="280" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="124" y="296" fill="#64748b">15</text>
-
-    <rect x="0" y="308" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="324" fill="#64748b">11</text>
-    <rect x="28" y="308" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="324" fill="#64748b">l</text>
-    <text x="68" y="324" fill="#38bdf8">→</text>
-    <rect x="80" y="308" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="94" y="324" fill="#64748b">L</text>
-    <rect x="112" y="308" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="124" y="324" fill="#64748b">11</text>
-
-    <rect x="0" y="336" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="352" fill="#64748b">12</text>
-    <rect x="28" y="336" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="352" fill="#64748b">m</text>
-    <text x="68" y="352" fill="#38bdf8">→</text>
-    <rect x="80" y="336" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="94" y="352" fill="#64748b">M</text>
-    <rect x="112" y="336" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="124" y="352" fill="#64748b">12</text>
-
-    <rect x="0" y="364" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="380" fill="#64748b">13</text>
-    <rect x="28" y="364" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="380" fill="#64748b">i</text>
-    <text x="68" y="380" fill="#38bdf8">→</text>
-    <rect x="80" y="364" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="94" y="380" fill="#64748b">I</text>
-    <rect x="112" y="364" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="124" y="380" fill="#64748b">8</text>
-
-    <rect x="0" y="392" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="408" fill="#64748b">14</text>
-    <rect x="28" y="392" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="408" fill="#64748b">k</text>
-    <text x="68" y="408" fill="#38bdf8">→</text>
-    <rect x="80" y="392" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="94" y="408" fill="#64748b">K</text>
-    <rect x="112" y="392" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="124" y="408" fill="#64748b">10</text>
-
-    <rect x="0" y="420" width="24" height="24" fill="#0f172a" stroke="#475569"/><text x="12" y="436" fill="#64748b">15</text>
-    <rect x="28" y="420" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="42" y="436" fill="#64748b">b</text>
-    <text x="68" y="436" fill="#38bdf8">→</text>
-    <rect x="80" y="420" width="28" height="24" fill="#0f172a" stroke="#475569"/><text x="94" y="436" fill="#64748b">B</text>
-    <rect x="112" y="420" width="24" height="24" fill="#065f46" stroke="#34d399"/><text x="124" y="436" fill="#34d399">1</text>
+    <!-- bit_sel box -->
+    <rect x="112" y="67" width="112" height="54" rx="6" fill="#162032" stroke="#0369a1"/>
+    <text x="168" y="81" fill="#7dd3fc" font-size="10">bit_sel (1&lt;&lt;3)</text>
+    <g transform="translate(120, 87)">
+      <rect x="0" y="0" width="12" height="17" fill="#0d1526" stroke="#334155"/><text x="6" y="12" fill="#64748b" font-size="9">0</text>
+      <rect x="12" y="0" width="12" height="17" fill="#0d1526" stroke="#334155"/><text x="18" y="12" fill="#64748b" font-size="9">0</text>
+      <rect x="24" y="0" width="12" height="17" fill="#0d1526" stroke="#334155"/><text x="30" y="12" fill="#64748b" font-size="9">0</text>
+      <rect x="36" y="0" width="12" height="17" fill="#0d1526" stroke="#334155"/><text x="42" y="12" fill="#64748b" font-size="9">0</text>
+      <rect x="48" y="0" width="12" height="17" fill="#0284c7" stroke="#e0f2fe" stroke-width="1.4"/><text x="54" y="12" fill="#fff" font-size="9">1</text>
+      <rect x="60" y="0" width="12" height="17" fill="#0d1526" stroke="#334155"/><text x="66" y="12" fill="#64748b" font-size="9">0</text>
+      <rect x="72" y="0" width="12" height="17" fill="#0d1526" stroke="#334155"/><text x="78" y="12" fill="#64748b" font-size="9">0</text>
+      <rect x="84" y="0" width="12" height="17" fill="#0d1526" stroke="#334155"/><text x="90" y="12" fill="#64748b" font-size="9">0</text>
+    </g>
+    <text x="168" y="116" fill="#38bdf8" font-size="9.5">0x08 (≥26→0)</text>
   </g>
 
-  <!-- Arrow Block 2 -> Block 3 -->
-  <line x1="392" y1="280" x2="416" y2="280" stroke="#fbbf24" stroke-width="2.5" marker-end="url(#mY)"/>
+  <!-- Subtle horizontal divider -->
+  <line x1="372" y1="308" x2="832" y2="308" stroke="#1e293b" stroke-width="1.5"/>
+
+  <!-- Bottom: Clean XMM Selector Table (no heavy grid cages) -->
+  <g transform="translate(372, 314)" font-family="Consolas, monospace" font-size="11" font-weight="700" text-anchor="middle">
+    <!-- Column headers -->
+    <text x="34" y="11" fill="#94a3b8" font-size="10.5">Cell</text>
+    <text x="108" y="11" fill="#94a3b8" font-size="10.5">Char</text>
+    <text x="190" y="11" fill="#fbbf24" font-size="10.5">byte_sel</text>
+    <text x="296" y="11" fill="#38bdf8" font-size="10.5">bit_sel (8-bit)</text>
+    <text x="410" y="11" fill="#34d399" font-size="10.5">lower (&lt; ch)</text>
+
+    <!-- Row @0 -->
+    <rect x="0" y="17" width="460" height="21" rx="4" fill="#131e33"/>
+    <text x="34" y="31" fill="#93c5fd">@0</text><text x="108" y="31" fill="#e2e8f0">C (2)</text><text x="190" y="31" fill="#fde68a">B0</text><text x="296" y="31" fill="#7dd3fc">0000 0100</text><text x="410" y="31" fill="#94a3b8">A..B</text>
+
+    <!-- Row @1 -->
+    <rect x="0" y="41" width="460" height="21" rx="4" fill="#0f1829"/>
+    <text x="34" y="55" fill="#7dd3fc">@1</text><text x="108" y="55" fill="#e2e8f0">A (0)</text><text x="190" y="55" fill="#fde68a">B0</text><text x="296" y="55" fill="#7dd3fc">0000 0001</text><text x="410" y="55" fill="#64748b">∅</text>
+
+    <!-- Row @2 (highlighted) -->
+    <rect x="0" y="65" width="460" height="21" rx="4" fill="#0b2e26" stroke="#34d399" stroke-opacity="0.5"/>
+    <text x="34" y="79" fill="#6ee7b7">@2</text><text x="108" y="79" fill="#ecfdf5">T (19)</text><text x="190" y="79" fill="#fef3c7">B2</text><text x="296" y="79" fill="#e0f2fe">0000 1000</text><text x="410" y="79" fill="#6ee7b7">A..S</text>
+
+    <!-- Row @5 (highlighted) -->
+    <rect x="0" y="89" width="460" height="21" rx="4" fill="#0b2e26" stroke="#34d399" stroke-opacity="0.5"/>
+    <text x="34" y="103" fill="#6ee7b7">@5</text><text x="108" y="103" fill="#ecfdf5">R (17)</text><text x="190" y="103" fill="#fef3c7">B2</text><text x="296" y="103" fill="#e0f2fe">0000 0010</text><text x="410" y="103" fill="#6ee7b7">A..Q</text>
+
+    <!-- Row @15 (cyan highlight) -->
+    <rect x="0" y="113" width="460" height="21" rx="4" fill="#0c2a42" stroke="#38bdf8" stroke-opacity="0.5"/>
+    <text x="34" y="127" fill="#7dd3fc">@15</text><text x="108" y="127" fill="#e0f2fe">B (1)</text><text x="190" y="127" fill="#fef3c7">B0</text><text x="296" y="127" fill="#e0f2fe">0000 0010</text><text x="410" y="127" fill="#7dd3fc">A</text>
+
+    <text x="230" y="149" fill="#64748b" font-size="10" font-family="'Segoe UI', Inter, sans-serif" font-weight="600">+ lanes @3, @4, @6..@14  ·  computed once per board and kept in XMM registers</text>
+  </g>
+
+  <!-- Arrow Card 2 -> Card 3 -->
+  <line x1="848" y1="305" x2="872" y2="305" stroke="#fbbf24" stroke-width="2.4" marker-end="url(#mY)"/>
+
+  <!-- ................................................................... -->
+  <!-- CARD 3: DIRECT DEPTH-2 SEED & 64-BIT QUEUE (x=876..1244)            -->
+  <!-- ................................................................... -->
+  <rect x="876" y="140" width="368" height="330" rx="10" fill="#0d1526" stroke="#1f2f46" stroke-width="1.2"/>
+  <text x="1060" y="162" fill="#fde68a" font-size="13.5" font-weight="700" text-anchor="middle">3. Direct Depth-2 Seed (Skip Level 1)</text>
+
+  <!-- 3A: pair_nodes_[27][32] -->
+  <g transform="translate(894, 174)" font-family="Consolas, monospace" font-size="11" font-weight="700" text-anchor="middle">
+    <text x="28" y="13" fill="#94a3b8" font-size="10.5">L0\L1</text>
+    <rect x="64" y="0" width="62" height="19" rx="3" fill="#172133" stroke="#334155"/><text x="95" y="13" fill="#7dd3fc">A</text>
+    <rect x="130" y="0" width="62" height="19" rx="3" fill="#172133" stroke="#334155"/><text x="161" y="13" fill="#7dd3fc">E</text>
+    <rect x="196" y="0" width="62" height="19" rx="3" fill="#172133" stroke="#334155"/><text x="227" y="13" fill="#7dd3fc">Q</text>
+    <rect x="262" y="0" width="70" height="19" rx="3" fill="#3f1219" stroke="#f87171"/><text x="297" y="13" fill="#fca5a5">26✕</text>
+
+    <!-- Row C -->
+    <rect x="0" y="23" width="58" height="22" rx="3" fill="#1e3a8a" stroke="#60a5fa"/><text x="29" y="38" fill="#fff">C</text>
+    <rect x="64" y="23" width="62" height="22" rx="3" fill="#0284c7" stroke="#bae6fd" stroke-width="1.8"/><text x="95" y="38" fill="#fff">#45</text>
+    <rect x="130" y="23" width="62" height="22" rx="3" fill="#172133" stroke="#334155"/><text x="161" y="38" fill="#94a3b8">#46</text>
+    <rect x="196" y="23" width="62" height="22" rx="3" fill="#2c1218" stroke="#7f1d1d"/><text x="227" y="38" fill="#f87171">0</text>
+    <rect x="262" y="23" width="70" height="22" rx="3" fill="#2c1218" stroke="#7f1d1d"/><text x="297" y="38" fill="#f87171">0</text>
+
+    <!-- Row T -->
+    <rect x="0" y="49" width="58" height="22" rx="3" fill="#065f46" stroke="#34d399"/><text x="29" y="64" fill="#a7f3d0">T</text>
+    <rect x="64" y="49" width="62" height="22" rx="3" fill="#172133" stroke="#fbbf24"/><text x="95" y="64" fill="#fde68a">#52</text>
+    <rect x="130" y="49" width="62" height="22" rx="3" fill="#172133" stroke="#334155"/><text x="161" y="64" fill="#94a3b8">#53</text>
+    <rect x="196" y="49" width="62" height="22" rx="3" fill="#2c1218" stroke="#7f1d1d"/><text x="227" y="64" fill="#f87171">0</text>
+    <rect x="262" y="49" width="70" height="22" rx="3" fill="#2c1218" stroke="#7f1d1d"/><text x="297" y="64" fill="#f87171">0</text>
+
+    <!-- Row S -->
+    <rect x="0" y="75" width="58" height="22" rx="3" fill="#172133" stroke="#475569"/><text x="29" y="90" fill="#cbd5e1">S</text>
+    <rect x="64" y="75" width="62" height="22" rx="3" fill="#172133" stroke="#334155"/><text x="95" y="90" fill="#94a3b8">#59</text>
+    <rect x="130" y="75" width="62" height="22" rx="3" fill="#172133" stroke="#fbbf24"/><text x="161" y="90" fill="#fde68a">#61</text>
+    <rect x="196" y="75" width="62" height="22" rx="3" fill="#2c1218" stroke="#7f1d1d"/><text x="227" y="90" fill="#f87171">0</text>
+    <rect x="262" y="75" width="70" height="22" rx="3" fill="#2c1218" stroke="#7f1d1d"/><text x="297" y="90" fill="#f87171">0</text>
+
+    <!-- Row 26 sentinel -->
+    <rect x="0" y="101" width="58" height="20" rx="3" fill="#3f1219" stroke="#f87171"/><text x="29" y="115" fill="#fca5a5">26✕</text>
+    <rect x="64" y="101" width="268" height="20" rx="3" fill="#2c1218" stroke="#7f1d1d"/><text x="198" y="115" fill="#fca5a5" font-size="10">all 0  (84 edges → 1.7 KB L1 table)</text>
+  </g>
+
+  <!-- 3B: 64-bit PackedPath bar -->
+  <g transform="translate(894, 306)" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">
+    <rect x="0" y="0" width="114" height="36" rx="4" fill="#4c1d95" stroke="#c084fc"/>
+    <text x="57" y="15" fill="#f5f3ff" font-size="10.5">Visited</text>
+    <text x="57" y="30" fill="#e9d5ff" font-size="10">0x0003</text>
+
+    <rect x="118" y="0" width="84" height="36" rx="4" fill="#065f46" stroke="#34d399"/>
+    <text x="160" y="15" fill="#ecfdf5" font-size="10.5">Cell</text>
+    <text x="160" y="30" fill="#a7f3d0" font-size="10">@1</text>
+
+    <rect x="206" y="0" width="126" height="36" rx="4" fill="#0284c7" stroke="#bae6fd"/>
+    <text x="269" y="15" fill="#fff" font-size="10.5">Trie Node</text>
+    <text x="269" y="30" fill="#e0f2fe" font-size="10">#45</text>
+
+    <text x="57" y="50" fill="#c084fc" font-size="9.5">63..48 (16b)</text>
+    <text x="160" y="50" fill="#34d399" font-size="9.5">47..32 (16b)</text>
+    <text x="269" y="50" fill="#7dd3fc" font-size="9.5">31..0 (32b) · 1 store</text>
+  </g>
+
+  <!-- 3C: Level-2 BFS Queue (3 clean side-by-side cards) -->
+  <g transform="translate(894, 372)" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">
+    <!-- #45 CA @1 (Active) -->
+    <rect x="0" y="0" width="106" height="66" rx="6" fill="#0c2f4f" stroke="#38bdf8" stroke-width="1.8"/>
+    <text x="32" y="21" fill="#e0f2fe" font-size="11.5">#45</text>
+    <text x="32" y="39" fill="#fff" font-size="12">"CA"</text>
+    <text x="32" y="56" fill="#6ee7b7" font-size="11">@1</text>
+    <g transform="translate(62, 15)">
+      <rect x="0" y="0" width="9" height="9" fill="#a855f7"/><rect x="9" y="0" width="9" height="9" fill="#38bdf8"/><rect x="18" y="0" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="27" y="0" width="9" height="9" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="9" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="9" y="9" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="18" y="9" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="27" y="9" width="9" height="9" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="18" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="9" y="18" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="18" y="18" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="27" y="18" width="9" height="9" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="27" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="9" y="27" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="18" y="27" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="27" y="27" width="9" height="9" fill="#1e293b" stroke="#334155"/>
+    </g>
+
+    <!-- #52 TA @1 -->
+    <rect x="113" y="0" width="106" height="66" rx="6" fill="#162032" stroke="#334155"/>
+    <text x="145" y="21" fill="#94a3b8" font-size="11.5">#52</text>
+    <text x="145" y="39" fill="#cbd5e1" font-size="12">"TA"</text>
+    <text x="145" y="56" fill="#94a3b8" font-size="11">@1</text>
+    <g transform="translate(175, 15)">
+      <rect x="0" y="0" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="9" y="0" width="9" height="9" fill="#38bdf8"/><rect x="18" y="0" width="9" height="9" fill="#a855f7"/><rect x="27" y="0" width="9" height="9" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="9" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="9" y="9" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="18" y="9" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="27" y="9" width="9" height="9" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="18" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="9" y="18" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="18" y="18" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="27" y="18" width="9" height="9" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="27" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="9" y="27" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="18" y="27" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="27" y="27" width="9" height="9" fill="#1e293b" stroke="#334155"/>
+    </g>
+
+    <!-- #61 SE @6 -->
+    <rect x="226" y="0" width="106" height="66" rx="6" fill="#162032" stroke="#334155"/>
+    <text x="258" y="21" fill="#94a3b8" font-size="11.5">#61</text>
+    <text x="258" y="39" fill="#cbd5e1" font-size="12">"SE"</text>
+    <text x="258" y="56" fill="#94a3b8" font-size="11">@6</text>
+    <g transform="translate(288, 15)">
+      <rect x="0" y="0" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="9" y="0" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="18" y="0" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="27" y="0" width="9" height="9" fill="#a855f7"/>
+      <rect x="0" y="9" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="9" y="9" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="18" y="9" width="9" height="9" fill="#38bdf8"/><rect x="27" y="9" width="9" height="9" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="18" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="9" y="18" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="18" y="18" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="27" y="18" width="9" height="9" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="27" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="9" y="27" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="18" y="27" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="27" y="27" width="9" height="9" fill="#1e293b" stroke="#334155"/>
+    </g>
+
+    <text x="166" y="85" fill="#94a3b8" font-size="10.5" font-family="'Segoe UI', Inter, sans-serif" font-weight="600">Level-2 BFS queue  ·  ~37–65 valid 2-cell starts</text>
+  </g>
 
   <!-- =================================================================== -->
-  <!-- BLOCK 3: BFS QUEUE (LEVEL 1 -> LEVEL 2)                             -->
+  <!-- FLOW CONNECTOR: STAGE 1 -> STAGE 2                                  -->
   <!-- =================================================================== -->
-  <rect x="420" y="20" width="212" height="520" rx="10" fill="#1e293b" stroke="#fbbf24" stroke-width="1.5"/>
-  <rect x="420" y="20" width="212" height="32" rx="10" fill="#b45309"/>
-  <text x="526" y="41" fill="#fffbeb" font-size="13.5" font-weight="700" text-anchor="middle">3. BFS Level Queue</text>
+  <line x1="640" y1="484" x2="640" y2="518" stroke="#38bdf8" stroke-width="2.5" marker-end="url(#mC)"/>
+  <rect x="444" y="490" width="392" height="22" rx="11" fill="#0f2942" stroke="#38bdf8" stroke-opacity="0.7"/>
+  <text x="640" y="505" fill="#e0f2fe" font-size="11" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">Pop next path → #45 "CA" at @1  (visited = {0, 1})</text>
 
-  <!-- Sub-block 3A: Level 1 (1-Cell Paths) -->
-  <rect x="434" y="66" width="184" height="206" rx="8" fill="#0f172a" stroke="#f59e0b"/>
-  <rect x="434" y="66" width="184" height="24" rx="8" fill="#78350f"/>
-  <text x="526" y="82" fill="#fde68a" font-size="12" font-weight="700" text-anchor="middle">3A. Level 1 (1 Cell)</text>
+  <!-- =================================================================== -->
+  <!-- STAGE 2: PHASE A — TRIE, SSSE3 PROJECTION & 16-BIT FILTER           -->
+  <!-- =================================================================== -->
+  <rect x="20" y="522" width="1240" height="524" rx="12" fill="#111a2c" stroke="#263449" stroke-width="1.4"/>
+  <circle cx="42" cy="543" r="5" fill="#38bdf8"/>
+  <text x="56" y="548" fill="#e2e8f0" font-size="13" font-weight="700" letter-spacing="0.5">STAGE 2 · PHASE A — TRIE LOOKUP, SSSE3 PROJECTION &amp; 16-BIT GRID FILTER</text>
+  <line x1="36" y1="560" x2="1244" y2="560" stroke="#1e293b" stroke-width="1.5"/>
 
-  <!-- Queue Item: [#3 'C' | Cell 0 | Visited Grid] -->
-  <g transform="translate(446, 102)" font-family="Consolas, monospace" font-size="11" font-weight="700" text-anchor="middle">
-    <rect x="0" y="0" width="52" height="36" rx="4" fill="#1e3a8a" stroke="#60a5fa"/>
-    <text x="26" y="15" fill="#93c5fd">#3</text>
-    <text x="26" y="30" fill="#fff">"C"</text>
-    <rect x="56" y="0" width="38" height="36" rx="4" fill="#065f46" stroke="#34d399"/>
-    <text x="75" y="22" fill="#a7f3d0">@0</text>
-    <!-- 4x4 mini visited grid (cell 0 lit) -->
-    <g transform="translate(106, 2)">
-      <rect x="0" y="0" width="8" height="8" fill="#60a5fa"/><rect x="8" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/>
-      <rect x="0" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/>
-      <rect x="0" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/>
-      <rect x="0" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+  <!-- ................................................................... -->
+  <!-- CARD 4: 8-BYTE NODE + DEFERRED RAIL + SSSE3 CROSSBAR (x=36..684)    -->
+  <!-- ................................................................... -->
+  <rect x="36" y="570" width="648" height="462" rx="10" fill="#0d1526" stroke="#1f2f46" stroke-width="1.2"/>
+  <text x="360" y="592" fill="#7dd3fc" font-size="13.5" font-weight="700" text-anchor="middle">4. Trie Node #45 &amp; SSSE3 Projection (All 16 Board Cells)</text>
+
+  <!-- Top Left: 8-Byte Node #45 ("CA") -->
+  <g transform="translate(52, 604)" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">
+    <!-- Mini tree -->
+    <circle cx="28" cy="37" r="24" fill="#0284c7" stroke="#bae6fd" stroke-width="2"/>
+    <text x="28" y="33" fill="#e0f2fe" font-size="11.5">#45</text>
+    <text x="28" y="48" fill="#fff" font-size="12.5">"CA"</text>
+
+    <line x1="50" y1="28" x2="88" y2="11" stroke="#64748b" stroke-width="1.8"/>
+    <rect x="88" y="0" width="98" height="22" rx="4" fill="#172133" stroke="#475569"/><text x="137" y="15" fill="#cbd5e1" font-size="10.5">#100 CAB ★</text>
+
+    <line x1="52" y1="37" x2="88" y2="37" stroke="#34d399" stroke-width="2"/>
+    <rect x="88" y="26" width="98" height="22" rx="4" fill="#0b2e26" stroke="#34d399"/><text x="137" y="41" fill="#ecfdf5" font-size="10.5">#101 CAR ★</text>
+
+    <line x1="50" y1="46" x2="88" y2="63" stroke="#34d399" stroke-width="2"/>
+    <rect x="88" y="52" width="98" height="22" rx="4" fill="#0b2e26" stroke="#34d399"/><text x="137" y="67" fill="#ecfdf5" font-size="10.5">#102 CAT ★</text>
+
+    <!-- first_child callout -->
+    <rect x="200" y="16" width="96" height="42" rx="6" fill="#142645" stroke="#60a5fa"/>
+    <text x="248" y="33" fill="#93c5fd" font-size="10.5">first_child</text>
+    <text x="248" y="50" fill="#fff" font-size="13">= 100</text>
+
+    <!-- 8 bytes badge -->
+    <rect x="308" y="22" width="76" height="30" rx="6" fill="#162032" stroke="#334155"/>
+    <text x="346" y="41" fill="#94a3b8" font-size="10.5">8 B / node</text>
+
+    <!-- 32-bit child_mask split into b31 | B3 | B2 | B1 | B0 -->
+    <g transform="translate(0, 82)">
+      <rect x="0" y="0" width="58" height="30" rx="4" fill="#431407" stroke="#fb923c"/>
+      <text x="29" y="13" fill="#ffedd5" font-size="9.5">b31 ★</text><text x="29" y="26" fill="#fb923c" font-size="10">0</text>
+
+      <rect x="63" y="0" width="72" height="30" rx="4" fill="#172133" stroke="#475569"/>
+      <text x="99" y="13" fill="#64748b" font-size="9.5">B3 (Y..Z)</text><text x="99" y="26" fill="#64748b" font-size="10">0000</text>
+
+      <rect x="140" y="0" width="96" height="30" rx="4" fill="#0b2e26" stroke="#34d399" stroke-width="1.6"/>
+      <text x="188" y="13" fill="#a7f3d0" font-size="9.5">B2 (Q..X)</text><text x="188" y="26" fill="#34d399" font-size="10">R=1, T=1</text>
+
+      <rect x="241" y="0" width="69" height="30" rx="4" fill="#172133" stroke="#475569"/>
+      <text x="275.5" y="13" fill="#64748b" font-size="9.5">B1 (I..P)</text><text x="275.5" y="26" fill="#64748b" font-size="10">0000</text>
+
+      <rect x="315" y="0" width="71" height="30" rx="4" fill="#0c2a42" stroke="#38bdf8" stroke-width="1.6"/>
+      <text x="350.5" y="13" fill="#bae6fd" font-size="9.5">B0 (A..H)</text><text x="350.5" y="26" fill="#38bdf8" font-size="10">B=1</text>
     </g>
   </g>
 
-  <!-- Queue Item: [#20 'T' | Cell 2] -->
-  <g transform="translate(446, 152)" font-family="Consolas, monospace" font-size="11" font-weight="700" text-anchor="middle">
-    <rect x="0" y="0" width="52" height="36" rx="4" fill="#0f172a" stroke="#475569"/>
-    <text x="26" y="15" fill="#94a3b8">#20</text>
-    <text x="26" y="30" fill="#cbd5e1">"T"</text>
-    <rect x="56" y="0" width="38" height="36" rx="4" fill="#0f172a" stroke="#475569"/>
-    <text x="75" y="22" fill="#94a3b8">@2</text>
-    <g transform="translate(106, 2)">
-      <rect x="0" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="0" width="8" height="8" fill="#60a5fa"/><rect x="24" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/>
-      <rect x="0" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/>
-      <rect x="0" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/>
-      <rect x="0" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+  <!-- Subtle vertical divider -->
+  <line x1="450" y1="604" x2="450" y2="718" stroke="#1e293b" stroke-width="1.5"/>
+
+  <!-- Top Right: Deferred Word Rail -->
+  <g transform="translate(464, 604)" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">
+    <text x="102" y="12" fill="#fed7aa" font-size="11" font-family="'Segoe UI', Inter, sans-serif">Deferred Word Rail (0 bitset R/W)</text>
+
+    <rect x="0" y="22" width="204" height="26" rx="5" fill="#172133" stroke="#475569"/>
+    <text x="102" y="39" fill="#94a3b8" font-size="10.5">#45 (b31 = 0)  →  +0</text>
+
+    <rect x="0" y="54" width="204" height="26" rx="5" fill="#0b2e26" stroke="#34d399"/>
+    <text x="102" y="71" fill="#a7f3d0" font-size="10.5">#102 (b31 = 1)  →  +1</text>
+
+    <rect x="0" y="86" width="204" height="26" rx="5" fill="#2b1709" stroke="#fb923c"/>
+    <text x="102" y="103" fill="#fed7aa" font-size="9.5">*found_ptr = node; ptr += mask&gt;&gt;31</text>
+  </g>
+
+  <!-- Subtle horizontal divider -->
+  <line x1="52" y1="726" x2="668" y2="726" stroke="#1e293b" stroke-width="1.5"/>
+
+  <!-- Bottom Main Visual: SSSE3 Crossbar Pipeline -->
+  <g transform="translate(60, 738)" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">
+    <text x="300" y="10" fill="#94a3b8" font-size="11" font-family="'Segoe UI', Inter, sans-serif">Broadcast 4-byte child_mask → route per board cell via vpshufb</text>
+
+    <!-- 4 broadcast bytes -->
+    <rect x="74" y="18" width="98" height="26" rx="5" fill="#0c2a42" stroke="#38bdf8" stroke-width="1.6"/>
+    <text x="123" y="35" fill="#e0f2fe" font-size="11.5">B0: B</text>
+
+    <rect x="184" y="18" width="90" height="26" rx="5" fill="#172133" stroke="#475569"/>
+    <text x="229" y="35" fill="#64748b" font-size="11.5">B1: 0</text>
+
+    <rect x="286" y="18" width="118" height="26" rx="5" fill="#0b2e26" stroke="#34d399" stroke-width="1.6"/>
+    <text x="345" y="35" fill="#a7f3d0" font-size="11.5">B2: R, T</text>
+
+    <rect x="416" y="18" width="90" height="26" rx="5" fill="#172133" stroke="#475569"/>
+    <text x="461" y="35" fill="#64748b" font-size="11.5">B3: 0</text>
+
+    <!-- Crossbar wires (wide, non-tangled) -->
+    <!-- B0 -> @0 (cx=56) & @15 (cx=544) -->
+    <path d="M 110 44 C 110 68, 56 68, 56 96" fill="none" stroke="#64748b" stroke-width="1.6" stroke-dasharray="4,3" marker-end="url(#mS)"/>
+    <path d="M 136 44 C 136 80, 544 64, 544 96" fill="none" stroke="#38bdf8" stroke-width="2.2" marker-end="url(#mC)"/>
+    <!-- B2 -> @2 (cx=178), @5 (cx=300), @3 (cx=422) -->
+    <path d="M 326 44 C 326 68, 178 68, 178 96" fill="none" stroke="#34d399" stroke-width="2.2" marker-end="url(#mG)"/>
+    <path d="M 345 44 C 345 68, 300 68, 300 96" fill="none" stroke="#34d399" stroke-width="2.2" marker-end="url(#mG)"/>
+    <path d="M 364 44 C 364 68, 422 68, 422 96" fill="none" stroke="#64748b" stroke-width="1.6" stroke-dasharray="4,3" marker-end="url(#mS)"/>
+
+    <!-- vpshufb pill -->
+    <rect x="220" y="60" width="160" height="22" rx="11" fill="#0d1526" stroke="#fbbf24" stroke-width="1.4"/>
+    <text x="300" y="75" fill="#fde68a" font-size="11">vpshufb (byte_sel)</text>
+
+    <!-- 5 Representative Lane Boxes (w=108, cx=56, 178, 300, 422, 544) -->
+    <g transform="translate(0, 100)">
+      <rect x="2" y="0" width="108" height="26" rx="4" fill="#172133" stroke="#475569"/><text x="56" y="17" fill="#94a3b8" font-size="11">@0 C → B0</text>
+      <rect x="124" y="0" width="108" height="26" rx="4" fill="#0b2e26" stroke="#34d399"/><text x="178" y="17" fill="#a7f3d0" font-size="11">@2 T → B2</text>
+      <rect x="246" y="0" width="108" height="26" rx="4" fill="#0b2e26" stroke="#34d399"/><text x="300" y="17" fill="#a7f3d0" font-size="11">@5 R → B2</text>
+      <rect x="368" y="0" width="108" height="26" rx="4" fill="#172133" stroke="#475569"/><text x="422" y="17" fill="#94a3b8" font-size="11">@3 S → B2</text>
+      <rect x="490" y="0" width="108" height="26" rx="4" fill="#0c2a42" stroke="#38bdf8"/><text x="544" y="17" fill="#e0f2fe" font-size="11">@15 B → B0</text>
+    </g>
+
+    <!-- AND bit_sel -->
+    <rect x="2" y="133" width="596" height="22" rx="4" fill="#142645" stroke="#38bdf8" stroke-opacity="0.8"/>
+    <text x="300" y="148" fill="#7dd3fc" font-size="11">AND bit_sel   (isolate each cell's single alphabet bit)</text>
+
+    <!-- Isolated bytes -->
+    <g transform="translate(0, 162)">
+      <rect x="2" y="0" width="108" height="24" rx="4" fill="#111a2c" stroke="#334155"/><text x="56" y="16" fill="#64748b" font-size="11">0x00</text>
+      <rect x="124" y="0" width="108" height="24" rx="4" fill="#065f46" stroke="#34d399"/><text x="178" y="16" fill="#ecfdf5" font-size="11">0x08</text>
+      <rect x="246" y="0" width="108" height="24" rx="4" fill="#065f46" stroke="#34d399"/><text x="300" y="16" fill="#ecfdf5" font-size="11">0x02</text>
+      <rect x="368" y="0" width="108" height="24" rx="4" fill="#111a2c" stroke="#334155"/><text x="422" y="16" fill="#64748b" font-size="11">0x00</text>
+      <rect x="490" y="0" width="108" height="24" rx="4" fill="#0284c7" stroke="#bae6fd"/><text x="544" y="16" fill="#fff" font-size="11">0x02</text>
+    </g>
+
+    <!-- + 0x7F MSB LED trick -->
+    <rect x="2" y="193" width="596" height="22" rx="4" fill="#3b1d07" stroke="#fbbf24" stroke-opacity="0.8"/>
+    <text x="300" y="208" fill="#fef3c7" font-size="11">+ 0x7F (127)   →   Bit 7 (MSB LED) lights iff byte ≠ 0</text>
+
+    <!-- MSB LED Row -->
+    <g transform="translate(0, 222)">
+      <rect x="2" y="0" width="108" height="26" rx="4" fill="#111a2c" stroke="#334155"/>
+      <circle cx="28" cy="13" r="5.5" fill="#334155"/><text x="68" y="17" fill="#64748b" font-size="11">0x7F</text>
+
+      <rect x="124" y="0" width="108" height="26" rx="4" fill="#0b2e26" stroke="#34d399"/>
+      <circle cx="150" cy="13" r="5.5" fill="#34d399"/><text x="190" y="17" fill="#a7f3d0" font-size="11">0x87</text>
+
+      <rect x="246" y="0" width="108" height="26" rx="4" fill="#0b2e26" stroke="#34d399"/>
+      <circle cx="272" cy="13" r="5.5" fill="#34d399"/><text x="312" y="17" fill="#a7f3d0" font-size="11">0x81</text>
+
+      <rect x="368" y="0" width="108" height="26" rx="4" fill="#111a2c" stroke="#334155"/>
+      <circle cx="394" cy="13" r="5.5" fill="#334155"/><text x="434" y="17" fill="#64748b" font-size="11">0x7F</text>
+
+      <rect x="490" y="0" width="108" height="26" rx="4" fill="#0284c7" stroke="#bae6fd"/>
+      <circle cx="516" cy="13" r="5.5" fill="#7dd3fc"/><text x="556" y="17" fill="#fff" font-size="11">0x81</text>
+    </g>
+
+    <!-- Multi-lane MSB collector bus -> pmovmskb -->
+    <path d="M 28 248 L 28 254 L 516 254 L 516 248" fill="none" stroke="#475569" stroke-width="1.5"/>
+    <line x1="394" y1="248" x2="394" y2="254" stroke="#475569" stroke-width="1.5"/>
+    <line x1="150" y1="248" x2="150" y2="254" stroke="#34d399" stroke-width="2.2"/>
+    <line x1="272" y1="248" x2="272" y2="254" stroke="#34d399" stroke-width="2.2"/>
+    <line x1="516" y1="248" x2="516" y2="254" stroke="#38bdf8" stroke-width="2.2"/>
+    <line x1="150" y1="254" x2="516" y2="254" stroke="#38bdf8" stroke-width="2"/>
+    <line x1="300" y1="254" x2="300" y2="262" stroke="#38bdf8" stroke-width="2" marker-end="url(#mC)"/>
+
+    <rect x="92" y="264" width="416" height="26" rx="6" fill="#0c2f4f" stroke="#38bdf8" stroke-width="1.6"/>
+    <text x="300" y="281" fill="#e0f2fe" font-size="11.5">pmovmskb (16 MSBs)  →  <tspan fill="#38bdf8">1</tspan><tspan fill="#94a3b8">000 0000 00</tspan><tspan fill="#34d399">1</tspan><tspan fill="#94a3b8">0 0</tspan><tspan fill="#34d399">1</tspan><tspan fill="#94a3b8">00₂</tspan></text>
+  </g>
+
+  <!-- Arrow Card 4 -> Card 5 -->
+  <line x1="684" y1="800" x2="708" y2="800" stroke="#38bdf8" stroke-width="2.4" marker-end="url(#mC)"/>
+
+  <!-- ................................................................... -->
+  <!-- CARD 5: 16-BIT GRID FILTER — HORIZONTAL EQUATION (x=712..1244)      -->
+  <!-- ................................................................... -->
+  <rect x="712" y="570" width="532" height="462" rx="10" fill="#0d1526" stroke="#1f2f46" stroke-width="1.2"/>
+  <text x="978" y="592" fill="#7dd3fc" font-size="13.5" font-weight="700" text-anchor="middle">5. 16-Bit Grid Filter (3 Masks Combined via Bitwise AND)</text>
+
+  <!-- Top Row: 3 side-by-side 4x4 grids (cx = 802, 978, 1154) -->
+  <!-- Grid 5A: Neighbours of @1 -->
+  <text x="802" y="622" fill="#fde68a" font-size="12" font-weight="700" text-anchor="middle">Neighbours @1</text>
+  <g transform="translate(750, 632)" font-family="Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">
+    <rect x="0" y="0" width="26" height="26" fill="#f59e0b" stroke="#fef3c7"/><text x="13" y="17" fill="#451a03">0</text>
+    <rect x="26" y="0" width="26" height="26" fill="#0284c7" stroke="#fff"/><text x="39" y="17" fill="#fff">@1</text>
+    <rect x="52" y="0" width="26" height="26" fill="#f59e0b" stroke="#fef3c7"/><text x="65" y="17" fill="#451a03">2</text>
+    <rect x="78" y="0" width="26" height="26" fill="#172133" stroke="#334155"/>
+
+    <rect x="0" y="26" width="26" height="26" fill="#f59e0b" stroke="#fef3c7"/><text x="13" y="43" fill="#451a03">4</text>
+    <rect x="26" y="26" width="26" height="26" fill="#f59e0b" stroke="#fef3c7"/><text x="39" y="43" fill="#451a03">5</text>
+    <rect x="52" y="26" width="26" height="26" fill="#f59e0b" stroke="#fef3c7"/><text x="65" y="43" fill="#451a03">6</text>
+    <rect x="78" y="26" width="26" height="26" fill="#172133" stroke="#334155"/>
+
+    <rect x="0" y="52" width="26" height="26" fill="#172133" stroke="#334155"/><rect x="26" y="52" width="26" height="26" fill="#172133" stroke="#334155"/><rect x="52" y="52" width="26" height="26" fill="#172133" stroke="#334155"/><rect x="78" y="52" width="26" height="26" fill="#172133" stroke="#334155"/>
+    <rect x="0" y="78" width="26" height="26" fill="#172133" stroke="#334155"/><rect x="26" y="78" width="26" height="26" fill="#172133" stroke="#334155"/><rect x="52" y="78" width="26" height="26" fill="#172133" stroke="#334155"/><rect x="78" y="78" width="26" height="26" fill="#172133" stroke="#334155"/>
+  </g>
+  <text x="802" y="756" fill="#64748b" font-size="10.5" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">0000 0000 0<tspan fill="#fbbf24">111</tspan> 0<tspan fill="#fbbf24">1</tspan>0<tspan fill="#fbbf24">1</tspan>₂</text>
+
+  <!-- & operator 1 -->
+  <circle cx="890" cy="684" r="14" fill="#162032" stroke="#64748b" stroke-width="1.4"/>
+  <text x="890" y="689" fill="#f8fafc" font-size="15" font-weight="700" text-anchor="middle">&amp;</text>
+
+  <!-- Grid 5B: Unvisited (~visited) -->
+  <text x="978" y="622" fill="#e9d5ff" font-size="12" font-weight="700" text-anchor="middle">Unvisited (~vis)</text>
+  <g transform="translate(926, 632)" font-family="Consolas, monospace" font-size="13" font-weight="700" text-anchor="middle">
+    <rect x="0" y="0" width="26" height="26" fill="#3f1219" stroke="#f87171"/><text x="13" y="18" fill="#f87171">✕</text>
+    <rect x="26" y="0" width="26" height="26" fill="#3f1219" stroke="#f87171"/><text x="39" y="18" fill="#f87171">✕</text>
+    <rect x="52" y="0" width="26" height="26" fill="#7e22ce" stroke="#e9d5ff"/>
+    <rect x="78" y="0" width="26" height="26" fill="#7e22ce" stroke="#e9d5ff"/>
+
+    <rect x="0" y="26" width="26" height="26" fill="#7e22ce" stroke="#e9d5ff"/><rect x="26" y="26" width="26" height="26" fill="#7e22ce" stroke="#e9d5ff"/><rect x="52" y="26" width="26" height="26" fill="#7e22ce" stroke="#e9d5ff"/><rect x="78" y="26" width="26" height="26" fill="#7e22ce" stroke="#e9d5ff"/>
+    <rect x="0" y="52" width="26" height="26" fill="#7e22ce" stroke="#e9d5ff"/><rect x="26" y="52" width="26" height="26" fill="#7e22ce" stroke="#e9d5ff"/><rect x="52" y="52" width="26" height="26" fill="#7e22ce" stroke="#e9d5ff"/><rect x="78" y="52" width="26" height="26" fill="#7e22ce" stroke="#e9d5ff"/>
+    <rect x="0" y="78" width="26" height="26" fill="#7e22ce" stroke="#e9d5ff"/><rect x="26" y="78" width="26" height="26" fill="#7e22ce" stroke="#e9d5ff"/><rect x="52" y="78" width="26" height="26" fill="#7e22ce" stroke="#e9d5ff"/><rect x="78" y="78" width="26" height="26" fill="#7e22ce" stroke="#e9d5ff"/>
+  </g>
+  <text x="978" y="756" fill="#c084fc" font-size="10.5" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">1111 1111 1111 11<tspan fill="#f87171">00</tspan>₂</text>
+
+  <!-- & operator 2 -->
+  <circle cx="1066" cy="684" r="14" fill="#162032" stroke="#64748b" stroke-width="1.4"/>
+  <text x="1066" y="689" fill="#f8fafc" font-size="15" font-weight="700" text-anchor="middle">&amp;</text>
+
+  <!-- Grid 5C: SIMD Match {B, R, T} -->
+  <text x="1154" y="622" fill="#7dd3fc" font-size="12" font-weight="700" text-anchor="middle">SIMD {B, R, T}</text>
+  <g transform="translate(1102, 632)" font-family="Consolas, monospace" font-size="13" font-weight="700" text-anchor="middle">
+    <rect x="0" y="0" width="26" height="26" fill="#172133" stroke="#334155"/><rect x="26" y="0" width="26" height="26" fill="#172133" stroke="#334155"/>
+    <rect x="52" y="0" width="26" height="26" fill="#0284c7" stroke="#e0f2fe"/><text x="65" y="18" fill="#fff">T</text>
+    <rect x="78" y="0" width="26" height="26" fill="#172133" stroke="#334155"/>
+
+    <rect x="0" y="26" width="26" height="26" fill="#172133" stroke="#334155"/>
+    <rect x="26" y="26" width="26" height="26" fill="#0284c7" stroke="#e0f2fe"/><text x="39" y="44" fill="#fff">R</text>
+    <rect x="52" y="26" width="26" height="26" fill="#172133" stroke="#334155"/><rect x="78" y="26" width="26" height="26" fill="#172133" stroke="#334155"/>
+
+    <rect x="0" y="52" width="26" height="26" fill="#172133" stroke="#334155"/><rect x="26" y="52" width="26" height="26" fill="#172133" stroke="#334155"/><rect x="52" y="52" width="26" height="26" fill="#172133" stroke="#334155"/><rect x="78" y="52" width="26" height="26" fill="#172133" stroke="#334155"/>
+
+    <rect x="0" y="78" width="26" height="26" fill="#172133" stroke="#334155"/><rect x="26" y="78" width="26" height="26" fill="#172133" stroke="#334155"/><rect x="52" y="78" width="26" height="26" fill="#172133" stroke="#334155"/>
+    <rect x="78" y="78" width="26" height="26" fill="#0284c7" stroke="#e0f2fe"/><text x="91" y="96" fill="#fff">B</text>
+  </g>
+  <text x="1154" y="756" fill="#64748b" font-size="10.5" font-family="Consolas, monospace" font-weight="700" text-anchor="middle"><tspan fill="#38bdf8">1</tspan>000 0000 00<tspan fill="#38bdf8">1</tspan>0 0<tspan fill="#38bdf8">1</tspan>00₂</text>
+
+  <!-- Convergence Bracket + "=" into Result -->
+  <path d="M 802 766 L 802 778 L 1154 778 L 1154 766" fill="none" stroke="#475569" stroke-width="1.6"/>
+  <line x1="978" y1="766" x2="978" y2="778" stroke="#475569" stroke-width="1.6"/>
+  <line x1="978" y1="778" x2="978" y2="818" stroke="#34d399" stroke-width="2" marker-end="url(#mG)"/>
+  <circle cx="978" cy="793" r="13" fill="#064e3b" stroke="#34d399" stroke-width="1.6"/>
+  <text x="978" y="798" fill="#ecfdf5" font-size="16" font-weight="700" text-anchor="middle">=</text>
+
+  <!-- Bottom Left: Surviving Mask "keep" -->
+  <rect x="734" y="822" width="234" height="196" rx="8" fill="#082a23" stroke="#34d399" stroke-width="1.5"/>
+  <text x="851" y="843" fill="#ecfdf5" font-size="12.5" font-weight="700" text-anchor="middle">Surviving Mask "keep"</text>
+  <g transform="translate(795, 853)" font-family="Consolas, monospace" font-size="13.5" font-weight="700" text-anchor="middle">
+    <rect x="0" y="0" width="28" height="28" fill="#0d1526" stroke="#334155"/><rect x="28" y="0" width="28" height="28" fill="#0d1526" stroke="#334155"/>
+    <rect x="56" y="0" width="28" height="28" fill="#10b981" stroke="#fff" stroke-width="1.6"/><text x="70" y="19" fill="#022c22">T</text>
+    <rect x="84" y="0" width="28" height="28" fill="#0d1526" stroke="#334155"/>
+
+    <rect x="0" y="28" width="28" height="28" fill="#0d1526" stroke="#334155"/>
+    <rect x="28" y="28" width="28" height="28" fill="#10b981" stroke="#fff" stroke-width="1.6"/><text x="42" y="47" fill="#022c22">R</text>
+    <rect x="56" y="28" width="28" height="28" fill="#0d1526" stroke="#334155"/><rect x="84" y="28" width="28" height="28" fill="#0d1526" stroke="#334155"/>
+
+    <rect x="0" y="56" width="28" height="28" fill="#0d1526" stroke="#334155"/><rect x="28" y="56" width="28" height="28" fill="#0d1526" stroke="#334155"/><rect x="56" y="56" width="28" height="28" fill="#0d1526" stroke="#334155"/><rect x="84" y="56" width="28" height="28" fill="#0d1526" stroke="#334155"/>
+
+    <rect x="0" y="84" width="28" height="28" fill="#0d1526" stroke="#334155"/><rect x="28" y="84" width="28" height="28" fill="#0d1526" stroke="#334155"/><rect x="56" y="84" width="28" height="28" fill="#0d1526" stroke="#334155"/>
+    <rect x="84" y="84" width="28" height="28" fill="#3f1219" stroke="#f87171"/><text x="98" y="102" fill="#f87171" font-size="11.5">B✕</text>
+  </g>
+  <text x="851" y="986" fill="#6ee7b7" font-size="11" font-family="Consolas, monospace" font-weight="700" text-anchor="middle"><tspan fill="#f87171">0</tspan>000 0000 00<tspan fill="#fff">1</tspan>0 0<tspan fill="#fff">1</tspan>00₂</text>
+  <text x="851" y="1006" fill="#a7f3d0" font-size="10.5" text-anchor="middle">@15 'B' dropped (not adjacent)</text>
+
+  <!-- Arrow keep -> Dead-end Gate -->
+  <line x1="968" y1="920" x2="998" y2="920" stroke="#34d399" stroke-width="2.2" marker-end="url(#mG)"/>
+
+  <!-- Bottom Right: Dead-End Filter Gate -->
+  <g transform="translate(1004, 822)" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">
+    <text x="109" y="17" fill="#cbd5e1" font-size="12" font-family="'Segoe UI', Inter, sans-serif">Dead-End Gate (Phase A)</text>
+
+    <rect x="0" y="30" width="218" height="74" rx="8" fill="#2c1218" stroke="#f87171"/>
+    <text x="109" y="53" fill="#fca5a5" font-size="12.5">keep == 0</text>
+    <text x="109" y="74" fill="#f87171" font-size="13">~54% Dropped ✕</text>
+    <text x="109" y="94" fill="#cbd5e1" font-size="10" font-family="'Segoe UI', Inter, sans-serif" font-weight="600">Never enters Phase B</text>
+
+    <rect x="0" y="118" width="218" height="78" rx="8" fill="#082a23" stroke="#34d399" stroke-width="1.6"/>
+    <text x="109" y="141" fill="#a7f3d0" font-size="12.5">keep != 0</text>
+    <text x="109" y="163" fill="#34d399" font-size="13">Push to active_ ✓</text>
+    <text x="109" y="184" fill="#a7f3d0" font-size="10" font-family="'Segoe UI', Inter, sans-serif" font-weight="600">Proceeds to Stage 3 bit scan</text>
+  </g>
+
+  <!-- =================================================================== -->
+  <!-- FLOW CONNECTOR: STAGE 2 -> STAGE 3                                  -->
+  <!-- =================================================================== -->
+  <line x1="640" y1="1046" x2="640" y2="1080" stroke="#34d399" stroke-width="2.5" marker-end="url(#mG)"/>
+  <rect x="412" y="1052" width="456" height="22" rx="11" fill="#082a23" stroke="#34d399" stroke-opacity="0.7"/>
+  <text x="640" y="1067" fill="#ecfdf5" font-size="11" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">Active record → #45 "CA"  |  keep = 0000 0000 0010 0100₂</text>
+
+  <!-- =================================================================== -->
+  <!-- STAGE 3: PHASE B — TWO-SLOT BIT SCAN, DEDUP & ZERO-COPY VIEWS       -->
+  <!-- =================================================================== -->
+  <rect x="20" y="1084" width="1240" height="460" rx="12" fill="#111a2c" stroke="#263449" stroke-width="1.4"/>
+  <circle cx="42" cy="1105" r="5" fill="#34d399"/>
+  <text x="56" y="1110" fill="#e2e8f0" font-size="13" font-weight="700" letter-spacing="0.5">STAGE 3 · PHASE B — TWO-SLOT BIT SCAN, COMPACTION &amp; ZERO-COPY OUTPUT</text>
+  <line x1="36" y1="1122" x2="1244" y2="1122" stroke="#1e293b" stroke-width="1.5"/>
+
+  <!-- ................................................................... -->
+  <!-- CARD 6: TWO-SLOT BIT SCAN & COMPACTION (x=36..792)                  -->
+  <!-- ................................................................... -->
+  <rect x="36" y="1132" width="756" height="398" rx="10" fill="#0d1526" stroke="#1f2f46" stroke-width="1.2"/>
+  <text x="414" y="1154" fill="#6ee7b7" font-size="13.5" font-weight="700" text-anchor="middle">6. Phase B: Two-Slot Bit Scan (Unrolled ×2) &amp; Multi-Pass Compact</text>
+
+  <!-- SLOT 0 (Left, x=52..372) -->
+  <g transform="translate(52, 1168)">
+    <text x="158" y="14" fill="#a7f3d0" font-size="12" font-weight="700" text-anchor="middle">Slot 0: tzcnt → popcnt → Store</text>
+
+    <!-- 8-bit zoom strip 0..7 -->
+    <g transform="translate(22, 50)" font-family="Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">
+      <rect x="0" y="0" width="34" height="28" fill="#172133" stroke="#334155"/><text x="17" y="19" fill="#64748b">0</text><text x="17" y="42" fill="#64748b" font-size="10.5">0</text>
+      <rect x="34" y="0" width="34" height="28" fill="#172133" stroke="#334155"/><text x="51" y="19" fill="#64748b">0</text><text x="51" y="42" fill="#64748b" font-size="10.5">1</text>
+      <rect x="68" y="0" width="34" height="28" fill="#10b981" stroke="#fff" stroke-width="1.8"/><text x="85" y="19" fill="#022c22">1</text><text x="85" y="42" fill="#34d399" font-size="10.5">2:T</text>
+      <rect x="102" y="0" width="34" height="28" fill="#172133" stroke="#334155"/><text x="119" y="19" fill="#64748b">0</text><text x="119" y="42" fill="#64748b" font-size="10.5">3</text>
+      <rect x="136" y="0" width="34" height="28" fill="#172133" stroke="#334155"/><text x="153" y="19" fill="#64748b">0</text><text x="153" y="42" fill="#64748b" font-size="10.5">4</text>
+      <rect x="170" y="0" width="34" height="28" fill="#065f46" stroke="#34d399"/><text x="187" y="19" fill="#a7f3d0">1</text><text x="187" y="42" fill="#34d399" font-size="10.5">5:R</text>
+      <rect x="204" y="0" width="34" height="28" fill="#172133" stroke="#334155"/><text x="221" y="19" fill="#64748b">0</text><text x="221" y="42" fill="#64748b" font-size="10.5">6</text>
+      <rect x="238" y="0" width="34" height="28" fill="#172133" stroke="#334155"/><text x="255" y="19" fill="#64748b">0</text><text x="255" y="42" fill="#64748b" font-size="10.5">7</text>
+
+      <!-- tzcnt jump arc -->
+      <path d="M 17 -2 Q 51 -22 85 -2" fill="none" stroke="#fbbf24" stroke-width="2.4" marker-end="url(#mY)"/>
+      <text x="164" y="-10" fill="#fde68a" font-size="11">tzcnt(keep) = 2</text>
+    </g>
+
+    <!-- Visual popcnt(mask & lower['T']) -->
+    <g transform="translate(12, 108)" font-family="Consolas, monospace" font-size="11" font-weight="700" text-anchor="middle">
+      <rect x="0" y="0" width="152" height="44" rx="5" fill="#3b1d07" fill-opacity="0.55" stroke="#fbbf24" stroke-dasharray="3,2"/>
+      <text x="76" y="13" fill="#fde68a" font-size="9.5">lower['T'] (&lt; T)</text>
+
+      <rect x="7" y="19" width="24" height="20" fill="#0d1526" stroke="#475569"/><text x="19" y="33" fill="#64748b">A</text>
+      <rect x="34" y="19" width="28" height="20" fill="#10b981" stroke="#fff"/><text x="48" y="33" fill="#022c22">B●</text>
+      <rect x="65" y="19" width="22" height="20" fill="#0d1526" stroke="#475569"/><text x="76" y="33" fill="#64748b">·</text>
+      <rect x="90" y="19" width="28" height="20" fill="#10b981" stroke="#fff"/><text x="104" y="33" fill="#022c22">R●</text>
+      <rect x="121" y="19" width="24" height="20" fill="#0d1526" stroke="#475569"/><text x="133" y="33" fill="#64748b">S</text>
+
+      <rect x="158" y="19" width="26" height="20" fill="#0284c7" stroke="#bae6fd"/><text x="171" y="33" fill="#fff">T</text>
+
+      <line x1="188" y1="29" x2="207" y2="29" stroke="#34d399" stroke-width="2" marker-end="url(#mG)"/>
+      <text x="252" y="13" fill="#34d399" font-size="10.5">popcnt = 2</text>
+      <rect x="212" y="18" width="80" height="24" rx="5" fill="#065f46" stroke="#34d399"/>
+      <text x="252" y="34" fill="#fff" font-size="11">100 + 2</text>
+    </g>
+
+    <!-- Store pills -->
+    <g transform="translate(12, 166)" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">
+      <rect x="0" y="0" width="292" height="28" rx="5" fill="#0b2e26" stroke="#34d399"/>
+      <text x="146" y="18" fill="#ecfdf5" font-size="11.5">[#102 "CAT" ★ | @2 | vis{0,1,2}]</text>
+
+      <rect x="0" y="35" width="292" height="26" rx="5" fill="#142645" stroke="#60a5fa"/>
+      <text x="146" y="52" fill="#93c5fd" font-size="10.5">1 × 64-bit store via CELL_PACKED[2]</text>
     </g>
   </g>
 
-  <!-- Queue Item: [#19 'S' | Cell 3] -->
-  <g transform="translate(446, 202)" font-family="Consolas, monospace" font-size="11" font-weight="700" text-anchor="middle">
-    <rect x="0" y="0" width="52" height="36" rx="4" fill="#0f172a" stroke="#475569"/>
-    <text x="26" y="15" fill="#94a3b8">#19</text>
-    <text x="26" y="30" fill="#cbd5e1">"S"</text>
-    <rect x="56" y="0" width="38" height="36" rx="4" fill="#0f172a" stroke="#475569"/>
-    <text x="75" y="22" fill="#94a3b8">@3</text>
-    <g transform="translate(106, 2)">
-      <rect x="0" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="0" width="8" height="8" fill="#60a5fa"/>
-      <rect x="0" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/>
-      <rect x="0" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/>
-      <rect x="0" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+  <!-- CENTER BRIDGE: blsr -->
+  <g transform="translate(366, 1216)" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">
+    <line x1="4" y1="16" x2="90" y2="16" stroke="#fbbf24" stroke-width="2.4" marker-end="url(#mY)"/>
+    <rect x="10" y="28" width="76" height="36" rx="6" fill="#3b1d07" stroke="#fbbf24" stroke-width="1.4"/>
+    <text x="48" y="43" fill="#fef3c7" font-size="11">blsr</text>
+    <text x="48" y="58" fill="#fde68a" font-size="9.5">k0&amp;(k0−1)</text>
+  </g>
+
+  <!-- SLOT 1 (Right, x=460..776) -->
+  <g transform="translate(460, 1168)">
+    <text x="158" y="14" fill="#a7f3d0" font-size="12" font-weight="700" text-anchor="middle">Slot 1: Bit 2 Cleared → Bit 5</text>
+
+    <!-- 8-bit zoom strip 0..7 -->
+    <g transform="translate(22, 50)" font-family="Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">
+      <rect x="0" y="0" width="34" height="28" fill="#172133" stroke="#334155"/><text x="17" y="19" fill="#64748b">0</text><text x="17" y="42" fill="#64748b" font-size="10.5">0</text>
+      <rect x="34" y="0" width="34" height="28" fill="#172133" stroke="#334155"/><text x="51" y="19" fill="#64748b">0</text><text x="51" y="42" fill="#64748b" font-size="10.5">1</text>
+      <!-- Bit 2 cleared -->
+      <rect x="68" y="0" width="34" height="28" fill="#3f1219" stroke="#f87171"/>
+      <text x="85" y="19" fill="#f87171">0</text>
+      <line x1="72" y1="24" x2="98" y2="4" stroke="#f87171" stroke-width="2"/>
+      <text x="85" y="42" fill="#f87171" font-size="10.5">2✕</text>
+      <rect x="102" y="0" width="34" height="28" fill="#172133" stroke="#334155"/><text x="119" y="19" fill="#64748b">0</text><text x="119" y="42" fill="#64748b" font-size="10.5">3</text>
+      <rect x="136" y="0" width="34" height="28" fill="#172133" stroke="#334155"/><text x="153" y="19" fill="#64748b">0</text><text x="153" y="42" fill="#64748b" font-size="10.5">4</text>
+      <rect x="170" y="0" width="34" height="28" fill="#10b981" stroke="#fff" stroke-width="1.8"/><text x="187" y="19" fill="#022c22">1</text><text x="187" y="42" fill="#34d399" font-size="10.5">5:R</text>
+      <rect x="204" y="0" width="34" height="28" fill="#172133" stroke="#334155"/><text x="221" y="19" fill="#64748b">0</text><text x="221" y="42" fill="#64748b" font-size="10.5">6</text>
+      <rect x="238" y="0" width="34" height="28" fill="#172133" stroke="#334155"/><text x="255" y="19" fill="#64748b">0</text><text x="255" y="42" fill="#64748b" font-size="10.5">7</text>
+
+      <!-- tzcnt jump arc cleanly under label -->
+      <path d="M 17 -2 Q 102 -22 187 -2" fill="none" stroke="#fbbf24" stroke-width="2.4" marker-end="url(#mY)"/>
+      <text x="102" y="-17" fill="#fde68a" font-size="11">tzcnt(k1) = 5</text>
+    </g>
+
+    <!-- Visual popcnt(mask & lower['R']) -->
+    <g transform="translate(12, 108)" font-family="Consolas, monospace" font-size="11" font-weight="700" text-anchor="middle">
+      <rect x="0" y="0" width="95" height="44" rx="5" fill="#3b1d07" fill-opacity="0.55" stroke="#fbbf24" stroke-dasharray="3,2"/>
+      <text x="47.5" y="13" fill="#fde68a" font-size="9.5">lower['R']</text>
+
+      <rect x="7" y="19" width="24" height="20" fill="#0d1526" stroke="#475569"/><text x="19" y="33" fill="#64748b">A</text>
+      <rect x="34" y="19" width="28" height="20" fill="#10b981" stroke="#fff"/><text x="48" y="33" fill="#022c22">B●</text>
+      <rect x="65" y="19" width="23" height="20" fill="#0d1526" stroke="#475569"/><text x="76.5" y="33" fill="#64748b">·</text>
+
+      <rect x="101" y="19" width="26" height="20" fill="#0284c7" stroke="#bae6fd"/><text x="114" y="33" fill="#fff">R</text>
+      <rect x="130" y="19" width="24" height="20" fill="#0d1526" stroke="#475569"/><text x="142" y="33" fill="#64748b">S</text>
+      <rect x="157" y="19" width="24" height="20" fill="#0d1526" stroke="#475569"/><text x="169" y="33" fill="#64748b">T</text>
+
+      <line x1="186" y1="29" x2="207" y2="29" stroke="#34d399" stroke-width="2" marker-end="url(#mG)"/>
+      <text x="252" y="13" fill="#34d399" font-size="10.5">popcnt = 1</text>
+      <rect x="212" y="18" width="80" height="24" rx="5" fill="#065f46" stroke="#34d399"/>
+      <text x="252" y="34" fill="#fff" font-size="11">100 + 1</text>
+    </g>
+
+    <!-- Store + branchless advance -->
+    <g transform="translate(12, 166)" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">
+      <rect x="0" y="0" width="292" height="28" rx="5" fill="#0b2e26" stroke="#34d399"/>
+      <text x="146" y="18" fill="#ecfdf5" font-size="11.5">[#101 "CAR" ★ | @5 | vis{0,1,5}]</text>
+
+      <rect x="0" y="35" width="292" height="26" rx="5" fill="#2b1b08" stroke="#fbbf24"/>
+      <text x="146" y="52" fill="#fde68a" font-size="10.5">next_ptr += 1 + (k1 != 0)   [+2]</text>
     </g>
   </g>
 
-  <!-- Arrow 3A -> 3B -->
-  <line x1="526" y1="274" x2="526" y2="306" stroke="#fbbf24" stroke-width="2.5" marker-end="url(#mY)"/>
+  <!-- Subtle horizontal divider -->
+  <line x1="56" y1="1414" x2="772" y2="1414" stroke="#1e293b" stroke-width="1.5"/>
 
-  <!-- Sub-block 3B: Level 2 (2-Cell Paths) -->
-  <rect x="434" y="310" width="184" height="212" rx="8" fill="#0f172a" stroke="#fbbf24" stroke-width="1.5"/>
-  <rect x="434" y="310" width="184" height="24" rx="8" fill="#92400e"/>
-  <text x="526" y="326" fill="#fde68a" font-size="12" font-weight="700" text-anchor="middle">3B. Level 2 (2 Cells)</text>
+  <!-- Bottom Strip: Multi-Pass Branchless Compaction -->
+  <g transform="translate(56, 1428)" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">
+    <text x="0" y="14" fill="#fde68a" font-size="11.5" font-family="'Segoe UI', Inter, sans-serif" text-anchor="start">Multi-Pass Compact (0 Branches):</text>
+    <text x="220" y="14" fill="#94a3b8" font-size="10.5" font-family="'Segoe UI', Inter, sans-serif" font-weight="600" text-anchor="start">k2 = k1 &amp; (k1 − 1)  ·  paths with 3+ matches pack in-place for the next pass</text>
 
-  <!-- Queue Item: [#45 'CA' | Cell 1 | Visited 0,1] -->
-  <g transform="translate(446, 346)" font-family="Consolas, monospace" font-size="11" font-weight="700" text-anchor="middle">
-    <rect x="0" y="0" width="52" height="36" rx="4" fill="#0284c7" stroke="#bae6fd" stroke-width="2"/>
-    <text x="26" y="15" fill="#e0f2fe">#45</text>
-    <text x="26" y="30" fill="#fff">"CA"</text>
-    <rect x="56" y="0" width="38" height="36" rx="4" fill="#065f46" stroke="#34d399" stroke-width="2"/>
-    <text x="75" y="22" fill="#a7f3d0">@1</text>
-    <g transform="translate(106, 2)">
-      <rect x="0" y="0" width="8" height="8" fill="#a855f7"/><rect x="8" y="0" width="8" height="8" fill="#38bdf8"/><rect x="16" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/>
-      <rect x="0" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/>
-      <rect x="0" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/>
-      <rect x="0" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+    <!-- Outcome chips + visual array compaction -->
+    <g transform="translate(0, 28)">
+      <rect x="0" y="0" width="136" height="30" rx="5" fill="#0b2e26" stroke="#34d399"/>
+      <text x="68" y="20" fill="#a7f3d0" font-size="11">k2 == 0 → Done ✓</text>
+
+      <rect x="148" y="0" width="144" height="30" rx="5" fill="#3b1d07" stroke="#fbbf24"/>
+      <text x="220" y="20" fill="#fef3c7" font-size="11">k2 != 0 → Keep ↻</text>
+
+      <!-- Visual compaction bar -->
+      <line x1="302" y1="15" x2="326" y2="15" stroke="#fbbf24" stroke-width="2" marker-end="url(#mY)"/>
+
+      <rect x="332" y="1" width="28" height="28" rx="4" fill="#0b2e26" stroke="#34d399"/><text x="346" y="20" fill="#6ee7b7" font-size="12">✓</text>
+      <rect x="364" y="1" width="28" height="28" rx="4" fill="#78350f" stroke="#fbbf24"/><text x="378" y="20" fill="#fef3c7" font-size="12">↻</text>
+      <rect x="396" y="1" width="28" height="28" rx="4" fill="#0b2e26" stroke="#34d399"/><text x="410" y="20" fill="#6ee7b7" font-size="12">✓</text>
+      <rect x="428" y="1" width="28" height="28" rx="4" fill="#78350f" stroke="#fbbf24"/><text x="442" y="20" fill="#fef3c7" font-size="12">↻</text>
+
+      <line x1="464" y1="15" x2="496" y2="15" stroke="#fbbf24" stroke-width="2" marker-end="url(#mY)"/>
+
+      <rect x="502" y="1" width="28" height="28" rx="4" fill="#78350f" stroke="#fbbf24"/><text x="516" y="20" fill="#fef3c7" font-size="12">↻</text>
+      <rect x="534" y="1" width="28" height="28" rx="4" fill="#78350f" stroke="#fbbf24"/><text x="548" y="20" fill="#fef3c7" font-size="12">↻</text>
+
+      <line x1="570" y1="15" x2="596" y2="15" stroke="#fbbf24" stroke-width="2" marker-end="url(#mY)"/>
+
+      <rect x="602" y="0" width="114" height="30" rx="6" fill="#78350f" stroke="#fbbf24"/>
+      <text x="659" y="20" fill="#fef3c7" font-size="11">↻ Slot 0 &amp; 1</text>
     </g>
   </g>
 
-  <!-- Queue Item: [#52 'TA' | Cell 1 | Visited 2,1] -->
-  <g transform="translate(446, 398)" font-family="Consolas, monospace" font-size="11" font-weight="700" text-anchor="middle">
-    <rect x="0" y="0" width="52" height="36" rx="4" fill="#0f172a" stroke="#475569"/>
-    <text x="26" y="15" fill="#94a3b8">#52</text>
-    <text x="26" y="30" fill="#cbd5e1">"TA"</text>
-    <rect x="56" y="0" width="38" height="36" rx="4" fill="#0f172a" stroke="#475569"/>
-    <text x="75" y="22" fill="#94a3b8">@1</text>
-    <g transform="translate(106, 2)">
-      <rect x="0" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="0" width="8" height="8" fill="#38bdf8"/><rect x="16" y="0" width="8" height="8" fill="#a855f7"/><rect x="24" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/>
-      <rect x="0" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/>
-      <rect x="0" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/>
-      <rect x="0" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+  <!-- Arrow Card 6 -> Card 7 -->
+  <line x1="792" y1="1330" x2="816" y2="1330" stroke="#c084fc" stroke-width="2.4" marker-end="url(#mP)"/>
+
+  <!-- ................................................................... -->
+  <!-- CARD 7: LEVEL-3 QUEUE, DEDUP & ZERO-COPY VIEWS (x=820..1244)        -->
+  <!-- ................................................................... -->
+  <rect x="820" y="1132" width="424" height="398" rx="10" fill="#0d1526" stroke="#1f2f46" stroke-width="1.2"/>
+  <text x="1032" y="1154" fill="#e9d5ff" font-size="13.5" font-weight="700" text-anchor="middle">7. Output, Bitset Dedup &amp; Zero-Copy Views</text>
+
+  <!-- 7A: Level-3 Queue (3 side-by-side cards) -->
+  <g transform="translate(836, 1168)" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">
+    <!-- #102 CAT @2 -->
+    <rect x="0" y="0" width="124" height="58" rx="6" fill="#0b2e26" stroke="#34d399" stroke-width="1.5"/>
+    <text x="40" y="20" fill="#a7f3d0" font-size="11">#102 ★</text>
+    <text x="40" y="38" fill="#fff" font-size="12">"CAT"</text>
+    <text x="40" y="52" fill="#6ee7b7" font-size="10">@2</text>
+    <g transform="translate(80, 11)">
+      <rect x="0" y="0" width="9" height="9" fill="#a855f7"/><rect x="9" y="0" width="9" height="9" fill="#a855f7"/><rect x="18" y="0" width="9" height="9" fill="#34d399"/><rect x="27" y="0" width="9" height="9" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="9" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="9" y="9" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="18" y="9" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="27" y="9" width="9" height="9" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="18" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="9" y="18" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="18" y="18" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="27" y="18" width="9" height="9" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="27" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="9" y="27" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="18" y="27" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="27" y="27" width="9" height="9" fill="#1e293b" stroke="#334155"/>
     </g>
-  </g>
 
-  <!-- Queue Item: [#61 'SE' | Cell 6 | Visited 3,6] -->
-  <g transform="translate(446, 450)" font-family="Consolas, monospace" font-size="11" font-weight="700" text-anchor="middle">
-    <rect x="0" y="0" width="52" height="36" rx="4" fill="#0f172a" stroke="#475569"/>
-    <text x="26" y="15" fill="#94a3b8">#61</text>
-    <text x="26" y="30" fill="#cbd5e1">"SE"</text>
-    <rect x="56" y="0" width="38" height="36" rx="4" fill="#0f172a" stroke="#475569"/>
-    <text x="75" y="22" fill="#94a3b8">@6</text>
-    <g transform="translate(106, 2)">
-      <rect x="0" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="0" width="8" height="8" fill="#a855f7"/>
-      <rect x="0" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="8" width="8" height="8" fill="#38bdf8"/><rect x="24" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/>
-      <rect x="0" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/>
-      <rect x="0" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+    <!-- #101 CAR @5 -->
+    <rect x="134" y="0" width="124" height="58" rx="6" fill="#0b2e26" stroke="#34d399" stroke-width="1.5"/>
+    <text x="174" y="20" fill="#a7f3d0" font-size="11">#101 ★</text>
+    <text x="174" y="38" fill="#fff" font-size="12">"CAR"</text>
+    <text x="174" y="52" fill="#6ee7b7" font-size="10">@5</text>
+    <g transform="translate(214, 11)">
+      <rect x="0" y="0" width="9" height="9" fill="#a855f7"/><rect x="9" y="0" width="9" height="9" fill="#a855f7"/><rect x="18" y="0" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="27" y="0" width="9" height="9" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="9" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="9" y="9" width="9" height="9" fill="#34d399"/><rect x="18" y="9" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="27" y="9" width="9" height="9" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="18" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="9" y="18" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="18" y="18" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="27" y="18" width="9" height="9" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="27" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="9" y="27" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="18" y="27" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="27" y="27" width="9" height="9" fill="#1e293b" stroke="#334155"/>
     </g>
-  </g>
 
-  <!-- Arrow Block 3 (#45 "CA") -> Block 4 -->
-  <line x1="632" y1="364" x2="656" y2="364" stroke="#38bdf8" stroke-width="2.5" marker-end="url(#mC)"/>
-
-  <!-- =================================================================== -->
-  <!-- BLOCK 4: TRIE NODE #45 ("CA") & POPCOUNT CHILD OFFSET               -->
-  <!-- =================================================================== -->
-  <rect x="660" y="20" width="212" height="520" rx="10" fill="#1e293b" stroke="#34d399" stroke-width="1.5"/>
-  <rect x="660" y="20" width="212" height="32" rx="10" fill="#065f46"/>
-  <text x="766" y="41" fill="#ecfdf5" font-size="13.5" font-weight="700" text-anchor="middle">4. Trie Node Lookup</text>
-
-  <!-- Visual Tree Node #45 "CA" -> #100 "CAB", #101 "CAR", #102 "CAT" -->
-  <g transform="translate(674, 72)" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">
-    <circle cx="34" cy="64" r="24" fill="#0284c7" stroke="#bae6fd" stroke-width="2"/>
-    <text x="34" y="60" fill="#e0f2fe" font-size="11">#45</text>
-    <text x="34" y="75" fill="#fff" font-size="12">"CA"</text>
-
-    <line x1="58" y1="52" x2="104" y2="24" stroke="#64748b" stroke-width="2"/>
-    <rect x="104" y="6" width="76" height="34" rx="5" fill="#0f172a" stroke="#64748b"/>
-    <text x="142" y="21" fill="#94a3b8" font-size="10.5">#100 (+0)</text>
-    <text x="142" y="34" fill="#cbd5e1" font-size="11">"CAB" ★</text>
-
-    <line x1="58" y1="64" x2="104" y2="64" stroke="#34d399" stroke-width="2.2"/>
-    <rect x="104" y="47" width="76" height="34" rx="5" fill="#064e3b" stroke="#34d399" stroke-width="1.8"/>
-    <text x="142" y="62" fill="#a7f3d0" font-size="10.5">#101 (+1)</text>
-    <text x="142" y="75" fill="#fff" font-size="11">"CAR" ★</text>
-
-    <line x1="58" y1="76" x2="104" y2="104" stroke="#34d399" stroke-width="2.2"/>
-    <rect x="104" y="88" width="76" height="34" rx="5" fill="#064e3b" stroke="#34d399" stroke-width="1.8"/>
-    <text x="142" y="103" fill="#a7f3d0" font-size="10.5">#102 (+2)</text>
-    <text x="142" y="116" fill="#fff" font-size="11">"CAT" ★</text>
-  </g>
-
-  <!-- 26-Bit Child Mask of #45 ("CA"): B=1, R=1, T=1 -->
-  <rect x="674" y="214" width="184" height="172" rx="8" fill="#0f172a" stroke="#10b981"/>
-  <rect x="674" y="214" width="184" height="24" rx="8" fill="#064e3b"/>
-  <text x="766" y="230" fill="#a7f3d0" font-size="11.5" font-weight="700" text-anchor="middle">4A. 26-Bit Child Mask</text>
-
-  <g transform="translate(684, 248)" font-family="Consolas, monospace" font-size="11" font-weight="700" text-anchor="middle">
-    <rect x="0" y="0" width="22" height="34" fill="#1e293b" stroke="#475569"/><text x="11" y="14" fill="#64748b">A</text><text x="11" y="29" fill="#475569">0</text>
-    <rect x="22" y="0" width="22" height="34" fill="#065f46" stroke="#34d399"/><text x="33" y="14" fill="#a7f3d0">B</text><text x="33" y="29" fill="#34d399">1</text>
-    <rect x="44" y="0" width="22" height="34" fill="#1e293b" stroke="#475569"/><text x="55" y="14" fill="#64748b">C</text><text x="55" y="29" fill="#475569">0</text>
-    <rect x="66" y="0" width="24" height="34" fill="#1e293b" stroke="#475569"/><text x="78" y="22" fill="#475569">··</text>
-    <rect x="90" y="0" width="22" height="34" fill="#065f46" stroke="#34d399"/><text x="101" y="14" fill="#a7f3d0">R</text><text x="101" y="29" fill="#34d399">1</text>
-    <rect x="112" y="0" width="22" height="34" fill="#1e293b" stroke="#475569"/><text x="123" y="14" fill="#64748b">S</text><text x="123" y="29" fill="#475569">0</text>
-    <rect x="134" y="0" width="28" height="34" fill="#1e3a8a" stroke="#60a5fa"/><text x="148" y="14" fill="#fff">T</text><text x="148" y="29" fill="#60a5fa">1</text>
-
-    <!-- Visual Popcount Offset Math -->
-    <rect x="0" y="46" width="162" height="34" rx="4" fill="#1e293b" stroke="#34d399"/>
-    <text x="81" y="68" fill="#a7f3d0" font-size="12">R: 100 + 1 = #101</text>
-
-    <rect x="0" y="88" width="162" height="34" rx="4" fill="#1e3a8a" stroke="#60a5fa"/>
-    <text x="81" y="110" fill="#eff6ff" font-size="12">T: 100 + 2 = #102</text>
-  </g>
-
-  <!-- Sub-block 4B: Word Check -->
-  <rect x="674" y="400" width="184" height="122" rx="8" fill="#0f172a" stroke="#f97316"/>
-  <rect x="674" y="400" width="184" height="24" rx="8" fill="#9a3412"/>
-  <text x="766" y="416" fill="#ffedd5" font-size="11.5" font-weight="700" text-anchor="middle">4B. End-of-Word Bit</text>
-
-  <g transform="translate(686, 438)" font-family="Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">
-    <rect x="0" y="0" width="160" height="30" rx="4" fill="#1e293b" stroke="#475569"/>
-    <text x="80" y="20" fill="#94a3b8">#45 "CA" → 0</text>
-    <rect x="0" y="38" width="160" height="30" rx="4" fill="#064e3b" stroke="#34d399"/>
-    <text x="80" y="58" fill="#a7f3d0">#102 "CAT" → 1 ★</text>
-  </g>
-
-  <!-- Arrow Block 4 -> Block 5 -->
-  <line x1="872" y1="280" x2="896" y2="280" stroke="#38bdf8" stroke-width="2.5" marker-end="url(#mC)"/>
-
-  <!-- =================================================================== -->
-  <!-- BLOCK 5: 16-BIT MASK INTERSECTION (3 4x4 GRIDS COMBINED WITH &)     -->
-  <!-- =================================================================== -->
-  <rect x="900" y="20" width="196" height="520" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
-  <rect x="900" y="20" width="196" height="32" rx="10" fill="#0284c7"/>
-  <text x="998" y="41" fill="#e0f2fe" font-size="13.5" font-weight="700" text-anchor="middle">5. 16-Bit Grid Filter</text>
-
-  <!-- Grid 5A: Adjacent to Cell 1 ('A') -> cells 0, 2, 4, 5, 6 -->
-  <rect x="914" y="62" width="168" height="104" rx="6" fill="#0f172a" stroke="#f59e0b"/>
-  <text x="998" y="78" fill="#fde68a" font-size="11" font-weight="700" text-anchor="middle">5A. Neighbours (@1)</text>
-  <g transform="translate(962, 84)">
-    <rect x="0" y="0" width="18" height="18" fill="#f59e0b" stroke="#fef3c7"/><rect x="18" y="0" width="18" height="18" fill="#0284c7" stroke="#fff"/><rect x="36" y="0" width="18" height="18" fill="#f59e0b" stroke="#fef3c7"/><rect x="54" y="0" width="18" height="18" fill="#1e293b" stroke="#334155"/>
-    <rect x="0" y="18" width="18" height="18" fill="#f59e0b" stroke="#fef3c7"/><rect x="18" y="18" width="18" height="18" fill="#f59e0b" stroke="#fef3c7"/><rect x="36" y="18" width="18" height="18" fill="#f59e0b" stroke="#fef3c7"/><rect x="54" y="18" width="18" height="18" fill="#1e293b" stroke="#334155"/>
-    <rect x="0" y="36" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="18" y="36" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="36" y="36" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="54" y="36" width="18" height="18" fill="#1e293b" stroke="#334155"/>
-    <rect x="0" y="54" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="18" y="54" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="36" y="54" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="54" y="54" width="18" height="18" fill="#1e293b" stroke="#334155"/>
-  </g>
-
-  <text x="998" y="180" fill="#f8fafc" font-size="14" font-weight="700" text-anchor="middle">&amp;</text>
-
-  <!-- Grid 5B: Unvisited (~visited: all except 0, 1) -->
-  <rect x="914" y="186" width="168" height="104" rx="6" fill="#0f172a" stroke="#a855f7"/>
-  <text x="998" y="202" fill="#e9d5ff" font-size="11" font-weight="700" text-anchor="middle">5B. Unvisited (~0,1)</text>
-  <g transform="translate(962, 208)">
-    <rect x="0" y="0" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="18" y="0" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="36" y="0" width="18" height="18" fill="#a855f7" stroke="#f5f3ff"/><rect x="54" y="0" width="18" height="18" fill="#a855f7" stroke="#f5f3ff"/>
-    <rect x="0" y="18" width="18" height="18" fill="#a855f7" stroke="#f5f3ff"/><rect x="18" y="18" width="18" height="18" fill="#a855f7" stroke="#f5f3ff"/><rect x="36" y="18" width="18" height="18" fill="#a855f7" stroke="#f5f3ff"/><rect x="54" y="18" width="18" height="18" fill="#a855f7" stroke="#f5f3ff"/>
-    <rect x="0" y="36" width="18" height="18" fill="#a855f7" stroke="#f5f3ff"/><rect x="18" y="36" width="18" height="18" fill="#a855f7" stroke="#f5f3ff"/><rect x="36" y="36" width="18" height="18" fill="#a855f7" stroke="#f5f3ff"/><rect x="54" y="36" width="18" height="18" fill="#a855f7" stroke="#f5f3ff"/>
-    <rect x="0" y="54" width="18" height="18" fill="#a855f7" stroke="#f5f3ff"/><rect x="18" y="54" width="18" height="18" fill="#a855f7" stroke="#f5f3ff"/><rect x="36" y="54" width="18" height="18" fill="#a855f7" stroke="#f5f3ff"/><rect x="54" y="54" width="18" height="18" fill="#a855f7" stroke="#f5f3ff"/>
-  </g>
-
-  <text x="998" y="304" fill="#f8fafc" font-size="14" font-weight="700" text-anchor="middle">&amp;</text>
-
-  <!-- Grid 5C: SIMD Letter Match for {B, R, T} -> cells 2 ('T'), 5 ('R'), 15 ('B') -->
-  <rect x="914" y="310" width="168" height="104" rx="6" fill="#0f172a" stroke="#38bdf8"/>
-  <text x="998" y="326" fill="#7dd3fc" font-size="11" font-weight="700" text-anchor="middle">5C. SIMD {B, R, T}</text>
-  <g transform="translate(962, 332)">
-    <rect x="0" y="0" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="18" y="0" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="36" y="0" width="18" height="18" fill="#0284c7" stroke="#e0f2fe"/><rect x="54" y="0" width="18" height="18" fill="#1e293b" stroke="#334155"/>
-    <rect x="0" y="18" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="18" y="18" width="18" height="18" fill="#0284c7" stroke="#e0f2fe"/><rect x="36" y="18" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="54" y="18" width="18" height="18" fill="#1e293b" stroke="#334155"/>
-    <rect x="0" y="36" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="18" y="36" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="36" y="36" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="54" y="36" width="18" height="18" fill="#1e293b" stroke="#334155"/>
-    <rect x="0" y="54" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="18" y="54" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="36" y="54" width="18" height="18" fill="#1e293b" stroke="#334155"/><rect x="54" y="54" width="18" height="18" fill="#0284c7" stroke="#e0f2fe"/>
-  </g>
-
-  <text x="998" y="426" fill="#34d399" font-size="15" font-weight="700" text-anchor="middle">=</text>
-
-  <!-- Grid 5D: Result Mask (only Cell 2 'T' and Cell 5 'R' lit) -->
-  <rect x="914" y="432" width="168" height="96" rx="6" fill="#064e3b" stroke="#34d399" stroke-width="1.8"/>
-  <g transform="translate(962, 444)" font-family="Consolas, monospace" font-size="11" font-weight="700" text-anchor="middle">
-    <rect x="0" y="0" width="18" height="18" fill="#0f172a" stroke="#334155"/><rect x="18" y="0" width="18" height="18" fill="#0f172a" stroke="#334155"/><rect x="36" y="0" width="18" height="18" fill="#10b981" stroke="#fff"/><text x="45" y="13" fill="#022c22">T</text><rect x="54" y="0" width="18" height="18" fill="#0f172a" stroke="#334155"/>
-    <rect x="0" y="18" width="18" height="18" fill="#0f172a" stroke="#334155"/><rect x="18" y="18" width="18" height="18" fill="#10b981" stroke="#fff"/><text x="27" y="31" fill="#022c22">R</text><rect x="36" y="18" width="18" height="18" fill="#0f172a" stroke="#334155"/><rect x="54" y="18" width="18" height="18" fill="#0f172a" stroke="#334155"/>
-    <rect x="0" y="36" width="18" height="18" fill="#0f172a" stroke="#334155"/><rect x="18" y="36" width="18" height="18" fill="#0f172a" stroke="#334155"/><rect x="36" y="36" width="18" height="18" fill="#0f172a" stroke="#334155"/><rect x="54" y="36" width="18" height="18" fill="#0f172a" stroke="#334155"/>
-    <rect x="0" y="54" width="18" height="18" fill="#0f172a" stroke="#334155"/><rect x="18" y="54" width="18" height="18" fill="#0f172a" stroke="#334155"/><rect x="36" y="54" width="18" height="18" fill="#0f172a" stroke="#334155"/><rect x="54" y="54" width="18" height="18" fill="#0f172a" stroke="#334155"/>
-  </g>
-
-  <!-- Arrow Block 5 -> Block 6 -->
-  <line x1="1096" y1="480" x2="1120" y2="480" stroke="#34d399" stroke-width="2.5" marker-end="url(#mG)"/>
-
-  <!-- =================================================================== -->
-  <!-- BLOCK 6: TWO-SLOT BIT SCAN (TZCNT / BLSR)                           -->
-  <!-- =================================================================== -->
-  <rect x="1124" y="20" width="196" height="520" rx="10" fill="#1e293b" stroke="#34d399" stroke-width="1.5"/>
-  <rect x="1124" y="20" width="196" height="32" rx="10" fill="#059669"/>
-  <text x="1222" y="41" fill="#ecfdf5" font-size="13.5" font-weight="700" text-anchor="middle">6. Two-Slot Bit Scan</text>
-
-  <!-- Slot 0: Jump to Bit 2 ('T') -->
-  <rect x="1138" y="70" width="168" height="204" rx="8" fill="#0f172a" stroke="#10b981" stroke-width="1.5"/>
-  <rect x="1138" y="70" width="168" height="24" rx="8" fill="#064e3b"/>
-  <text x="1222" y="86" fill="#a7f3d0" font-size="12" font-weight="700" text-anchor="middle">6A. Slot 0 (tzcnt)</text>
-
-  <!-- 8-bit strip 0..7 showing bit 2 and bit 5 set -->
-  <g transform="translate(1146, 110)" font-family="Consolas, monospace" font-size="10.5" font-weight="700" text-anchor="middle">
-    <rect x="0" y="0" width="19" height="26" fill="#1e293b" stroke="#475569"/><text x="9.5" y="17" fill="#64748b">0</text><text x="9.5" y="38" fill="#64748b">0</text>
-    <rect x="19" y="0" width="19" height="26" fill="#1e293b" stroke="#475569"/><text x="28.5" y="17" fill="#64748b">0</text><text x="28.5" y="38" fill="#64748b">1</text>
-    <rect x="38" y="0" width="19" height="26" fill="#10b981" stroke="#fff" stroke-width="1.8"/><text x="47.5" y="17" fill="#022c22">1</text><text x="47.5" y="38" fill="#34d399">2</text>
-    <rect x="57" y="0" width="19" height="26" fill="#1e293b" stroke="#475569"/><text x="66.5" y="17" fill="#64748b">0</text><text x="66.5" y="38" fill="#64748b">3</text>
-    <rect x="76" y="0" width="19" height="26" fill="#1e293b" stroke="#475569"/><text x="85.5" y="17" fill="#64748b">0</text><text x="85.5" y="38" fill="#64748b">4</text>
-    <rect x="95" y="0" width="19" height="26" fill="#065f46" stroke="#34d399"/><text x="104.5" y="17" fill="#a7f3d0">1</text><text x="104.5" y="38" fill="#34d399">5</text>
-    <rect x="114" y="0" width="19" height="26" fill="#1e293b" stroke="#475569"/><text x="123.5" y="17" fill="#64748b">0</text><text x="123.5" y="38" fill="#64748b">6</text>
-    <rect x="133" y="0" width="19" height="26" fill="#1e293b" stroke="#475569"/><text x="142.5" y="17" fill="#64748b">0</text><text x="142.5" y="38" fill="#64748b">7</text>
-
-    <!-- Jump arc from 0 to bit 2 -->
-    <path d="M 9.5 -2 Q 28.5 -18 47.5 -2" fill="none" stroke="#fbbf24" stroke-width="2" marker-end="url(#mY)"/>
-  </g>
-
-  <rect x="1152" y="172" width="140" height="84" rx="6" fill="#064e3b" stroke="#34d399"/>
-  <text x="1222" y="196" fill="#a7f3d0" font-size="13" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">@2 → 'T'</text>
-  <text x="1222" y="218" fill="#fff" font-size="13" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">100 + 2 = #102</text>
-  <text x="1222" y="242" fill="#fde68a" font-size="13" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">"CAT" ★</text>
-
-  <!-- Arrow 6A -> 6B -->
-  <line x1="1222" y1="274" x2="1222" y2="306" stroke="#34d399" stroke-width="2.5" marker-end="url(#mG)"/>
-
-  <!-- Slot 1: Jump to Bit 5 ('R') after clearing Bit 2 -->
-  <rect x="1138" y="310" width="168" height="204" rx="8" fill="#0f172a" stroke="#10b981" stroke-width="1.5"/>
-  <rect x="1138" y="310" width="168" height="24" rx="8" fill="#064e3b"/>
-  <text x="1222" y="326" fill="#a7f3d0" font-size="12" font-weight="700" text-anchor="middle">6B. Slot 1 (blsr + tzcnt)</text>
-
-  <g transform="translate(1146, 350)" font-family="Consolas, monospace" font-size="10.5" font-weight="700" text-anchor="middle">
-    <rect x="0" y="0" width="19" height="26" fill="#1e293b" stroke="#475569"/><text x="9.5" y="17" fill="#64748b">0</text><text x="9.5" y="38" fill="#64748b">0</text>
-    <rect x="19" y="0" width="19" height="26" fill="#1e293b" stroke="#475569"/><text x="28.5" y="17" fill="#64748b">0</text><text x="28.5" y="38" fill="#64748b">1</text>
-    <rect x="38" y="0" width="19" height="26" fill="#1e293b" stroke="#475569"/><text x="47.5" y="17" fill="#64748b">0</text><text x="47.5" y="38" fill="#64748b">2</text>
-    <rect x="57" y="0" width="19" height="26" fill="#1e293b" stroke="#475569"/><text x="66.5" y="17" fill="#64748b">0</text><text x="66.5" y="38" fill="#64748b">3</text>
-    <rect x="76" y="0" width="19" height="26" fill="#1e293b" stroke="#475569"/><text x="85.5" y="17" fill="#64748b">0</text><text x="85.5" y="38" fill="#64748b">4</text>
-    <rect x="95" y="0" width="19" height="26" fill="#10b981" stroke="#fff" stroke-width="1.8"/><text x="104.5" y="17" fill="#022c22">1</text><text x="104.5" y="38" fill="#34d399">5</text>
-    <rect x="114" y="0" width="19" height="26" fill="#1e293b" stroke="#475569"/><text x="123.5" y="17" fill="#64748b">0</text><text x="123.5" y="38" fill="#64748b">6</text>
-    <rect x="133" y="0" width="19" height="26" fill="#1e293b" stroke="#475569"/><text x="142.5" y="17" fill="#64748b">0</text><text x="142.5" y="38" fill="#64748b">7</text>
-
-    <!-- Jump arc from 0 to bit 5 -->
-    <path d="M 9.5 -2 Q 57 -22 104.5 -2" fill="none" stroke="#fbbf24" stroke-width="2" marker-end="url(#mY)"/>
-  </g>
-
-  <rect x="1152" y="412" width="140" height="84" rx="6" fill="#064e3b" stroke="#34d399"/>
-  <text x="1222" y="436" fill="#a7f3d0" font-size="13" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">@5 → 'R'</text>
-  <text x="1222" y="458" fill="#fff" font-size="13" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">100 + 1 = #101</text>
-  <text x="1222" y="482" fill="#fde68a" font-size="13" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">"CAR" ★</text>
-
-  <!-- Arrow Block 6 -> Block 7 -->
-  <line x1="1320" y1="280" x2="1344" y2="280" stroke="#c084fc" stroke-width="2.5" marker-end="url(#mP)"/>
-
-  <!-- =================================================================== -->
-  <!-- BLOCK 7: LEVEL 3 QUEUE & FOUND WORD VIEWS                           -->
-  <!-- =================================================================== -->
-  <rect x="1348" y="20" width="196" height="520" rx="10" fill="#1e293b" stroke="#c084fc" stroke-width="1.5"/>
-  <rect x="1348" y="20" width="196" height="32" rx="10" fill="#6d28d9"/>
-  <text x="1446" y="41" fill="#f5f3ff" font-size="13.5" font-weight="700" text-anchor="middle">7. Level 3 &amp; Output</text>
-
-  <!-- Sub-block 7A: Level 3 (3-Cell Paths) -->
-  <rect x="1362" y="66" width="168" height="196" rx="8" fill="#0f172a" stroke="#a855f7"/>
-  <rect x="1362" y="66" width="168" height="24" rx="8" fill="#4c1d95"/>
-  <text x="1446" y="82" fill="#e9d5ff" font-size="12" font-weight="700" text-anchor="middle">7A. Level 3 (3 Cells)</text>
-
-  <!-- Level 3 Item 1: #102 "CAT" @2 -->
-  <g transform="translate(1372, 102)" font-family="Consolas, monospace" font-size="10.5" font-weight="700" text-anchor="middle">
-    <rect x="0" y="0" width="66" height="36" rx="4" fill="#065f46" stroke="#34d399" stroke-width="1.8"/>
-    <text x="33" y="15" fill="#a7f3d0">#102 ★</text>
-    <text x="33" y="30" fill="#fff">"CAT"</text>
-    <rect x="70" y="0" width="32" height="36" rx="4" fill="#065f46" stroke="#34d399"/>
-    <text x="86" y="22" fill="#a7f3d0">@2</text>
-    <g transform="translate(110, 2)">
-      <rect x="0" y="0" width="8" height="8" fill="#a855f7"/><rect x="8" y="0" width="8" height="8" fill="#a855f7"/><rect x="16" y="0" width="8" height="8" fill="#34d399"/><rect x="24" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/>
-      <rect x="0" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/>
-      <rect x="0" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/>
-      <rect x="0" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+    <!-- #108 TAR @5 -->
+    <rect x="268" y="0" width="124" height="58" rx="6" fill="#0b2e26" stroke="#34d399" stroke-opacity="0.8"/>
+    <text x="308" y="20" fill="#a7f3d0" font-size="11">#108 ★</text>
+    <text x="308" y="38" fill="#fff" font-size="12">"TAR"</text>
+    <text x="308" y="52" fill="#6ee7b7" font-size="10">@5</text>
+    <g transform="translate(348, 11)">
+      <rect x="0" y="0" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="9" y="0" width="9" height="9" fill="#a855f7"/><rect x="18" y="0" width="9" height="9" fill="#a855f7"/><rect x="27" y="0" width="9" height="9" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="9" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="9" y="9" width="9" height="9" fill="#34d399"/><rect x="18" y="9" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="27" y="9" width="9" height="9" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="18" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="9" y="18" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="18" y="18" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="27" y="18" width="9" height="9" fill="#1e293b" stroke="#334155"/>
+      <rect x="0" y="27" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="9" y="27" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="18" y="27" width="9" height="9" fill="#1e293b" stroke="#334155"/><rect x="27" y="27" width="9" height="9" fill="#1e293b" stroke="#334155"/>
     </g>
+
+    <text x="196" y="75" fill="#94a3b8" font-size="10.5" font-family="'Segoe UI', Inter, sans-serif" font-weight="600">Level-3 paths  ·  repeat Stages 2–3 until level_size == 0</text>
   </g>
 
-  <!-- Level 3 Item 2: #101 "CAR" @5 -->
-  <g transform="translate(1372, 152)" font-family="Consolas, monospace" font-size="10.5" font-weight="700" text-anchor="middle">
-    <rect x="0" y="0" width="66" height="36" rx="4" fill="#065f46" stroke="#34d399" stroke-width="1.8"/>
-    <text x="33" y="15" fill="#a7f3d0">#101 ★</text>
-    <text x="33" y="30" fill="#fff">"CAR"</text>
-    <rect x="70" y="0" width="32" height="36" rx="4" fill="#065f46" stroke="#34d399"/>
-    <text x="86" y="22" fill="#a7f3d0">@5</text>
-    <g transform="translate(110, 2)">
-      <rect x="0" y="0" width="8" height="8" fill="#a855f7"/><rect x="8" y="0" width="8" height="8" fill="#a855f7"/><rect x="16" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/>
-      <rect x="0" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="8" width="8" height="8" fill="#34d399"/><rect x="16" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/>
-      <rect x="0" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/>
-      <rect x="0" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/>
+  <!-- Subtle divider -->
+  <line x1="836" y1="1254" x2="1228" y2="1254" stroke="#1e293b" stroke-width="1.5"/>
+
+  <!-- 7B: Post-Search Bitset Dedup Funnel -->
+  <g transform="translate(836, 1264)" font-family="Consolas, monospace" font-size="11" font-weight="700" text-anchor="middle">
+    <text x="196" y="10" fill="#fed7aa" font-size="11.5" font-family="'Segoe UI', Inter, sans-serif">Post-Search Bitset Dedup</text>
+
+    <!-- 4 raw candidates -->
+    <rect x="24" y="18" width="76" height="22" rx="4" fill="#065f46" stroke="#34d399"/><text x="62" y="33" fill="#fff">#102</text>
+    <rect x="114" y="18" width="76" height="22" rx="4" fill="#065f46" stroke="#34d399"/><text x="152" y="33" fill="#fff">#101</text>
+    <rect x="204" y="18" width="76" height="22" rx="4" fill="#3f1219" stroke="#f87171"/><text x="242" y="33" fill="#fca5a5">#102</text>
+    <rect x="294" y="18" width="76" height="22" rx="4" fill="#065f46" stroke="#34d399"/><text x="332" y="33" fill="#fff">#108</text>
+
+    <!-- Down arrows -->
+    <line x1="62" y1="40" x2="62" y2="54" stroke="#34d399" stroke-width="1.8" marker-end="url(#mG)"/>
+    <line x1="152" y1="40" x2="152" y2="54" stroke="#34d399" stroke-width="1.8" marker-end="url(#mG)"/>
+    <line x1="242" y1="40" x2="242" y2="54" stroke="#f87171" stroke-width="1.8" marker-end="url(#mR)"/>
+    <line x1="332" y1="40" x2="332" y2="54" stroke="#34d399" stroke-width="1.8" marker-end="url(#mG)"/>
+
+    <!-- Bitset filter bar -->
+    <rect x="16" y="57" width="360" height="24" rx="5" fill="#162032" stroke="#fb923c"/>
+    <text x="196" y="73" fill="#fed7aa" font-size="11">found_word_bits_  [1 bit per node]</text>
+
+    <!-- Outgoing unique paths + blocked duplicate -->
+    <line x1="62" y1="81" x2="78" y2="103" stroke="#34d399" stroke-width="1.8" marker-end="url(#mG)"/>
+    <line x1="152" y1="81" x2="196" y2="103" stroke="#c084fc" stroke-width="1.8" marker-end="url(#mP)"/>
+    <line x1="332" y1="81" x2="314" y2="103" stroke="#c084fc" stroke-width="1.8" marker-end="url(#mP)"/>
+    <!-- Crisp dup badge directly under red #102 lane (x=242) -->
+    <line x1="242" y1="81" x2="242" y2="87" stroke="#f87171" stroke-width="1.8"/>
+    <rect x="216" y="86" width="52" height="17" rx="8" fill="#7f1d1d" stroke="#f87171"/>
+    <text x="242" y="98" fill="#fee2e2" font-size="9.5">✕ dup</text>
+
+    <!-- Unique survivors -->
+    <rect x="34" y="106" width="88" height="24" rx="5" fill="#065f46" stroke="#34d399"/><text x="78" y="122" fill="#fff">#102</text>
+    <rect x="152" y="106" width="88" height="24" rx="5" fill="#4c1d95" stroke="#c084fc"/><text x="196" y="122" fill="#fff">#101</text>
+    <rect x="270" y="106" width="88" height="24" rx="5" fill="#4c1d95" stroke="#c084fc"/><text x="314" y="122" fill="#fff">#108</text>
+  </g>
+
+  <!-- Subtle divider -->
+  <line x1="836" y1="1402" x2="1228" y2="1402" stroke="#1e293b" stroke-width="1.5"/>
+
+  <!-- 7C: Zero-Copy Word Views + Selective Bit Reset -->
+  <g transform="translate(836, 1412)" font-family="Consolas, monospace" font-weight="700" text-anchor="middle">
+    <!-- Side-by-side view chips directly above their slices! -->
+    <rect x="0" y="0" width="188" height="26" rx="5" fill="#4c1d95" stroke="#c084fc"/>
+    <text x="94" y="17" fill="#f5f3ff" font-size="11">#101 → [off:3, len:3]</text>
+
+    <rect x="204" y="0" width="188" height="26" rx="5" fill="#0b2e26" stroke="#34d399"/>
+    <text x="298" y="17" fill="#ecfdf5" font-size="11">#102 → [off:6, len:3]</text>
+
+    <!-- Straight non-crossing arrows straight down into slices -->
+    <line x1="168" y1="26" x2="168" y2="45" stroke="#c084fc" stroke-width="2" marker-end="url(#mP)"/>
+    <line x1="318" y1="26" x2="318" y2="45" stroke="#34d399" stroke-width="2" marker-end="url(#mG)"/>
+
+    <!-- Flat immutable word_text_ ribbon -->
+    <g transform="translate(0, 48)" font-size="12">
+      <rect x="0" y="0" width="96" height="28" rx="4" fill="#172133" stroke="#475569"/><text x="48" y="18" fill="#64748b">C A B</text>
+      <rect x="100" y="0" width="142" height="28" rx="4" fill="#581c87" stroke="#c084fc" stroke-width="1.6"/><text x="171" y="18" fill="#f5f3ff">C A R</text>
+      <rect x="246" y="0" width="146" height="28" rx="4" fill="#065f46" stroke="#34d399" stroke-width="1.6"/><text x="319" y="18" fill="#ecfdf5">C A T</text>
     </g>
-  </g>
 
-  <!-- Level 3 Item 3: #108 "TAR" @5 -->
-  <g transform="translate(1372, 202)" font-family="Consolas, monospace" font-size="10.5" font-weight="700" text-anchor="middle">
-    <rect x="0" y="0" width="66" height="36" rx="4" fill="#065f46" stroke="#34d399"/>
-    <text x="33" y="15" fill="#a7f3d0">#108 ★</text>
-    <text x="33" y="30" fill="#fff">"TAR"</text>
-    <rect x="70" y="0" width="32" height="36" rx="4" fill="#065f46" stroke="#34d399"/>
-    <text x="86" y="22" fill="#a7f3d0">@5</text>
-    <g transform="translate(110, 2)">
-      <rect x="0" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="0" width="8" height="8" fill="#a855f7"/><rect x="16" y="0" width="8" height="8" fill="#a855f7"/><rect x="24" y="0" width="8" height="8" fill="#1e293b" stroke="#334155"/>
-      <rect x="0" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="8" width="8" height="8" fill="#34d399"/><rect x="16" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="8" width="8" height="8" fill="#1e293b" stroke="#334155"/>
-      <rect x="0" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="16" width="8" height="8" fill="#1e293b" stroke="#334155"/>
-      <rect x="0" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="8" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="16" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/><rect x="24" y="24" width="8" height="8" fill="#1e293b" stroke="#334155"/>
-    </g>
-  </g>
-
-  <!-- Arrow 7A -> 7B -->
-  <line x1="1446" y1="264" x2="1446" y2="292" stroke="#c084fc" stroke-width="2.5" marker-end="url(#mP)"/>
-
-  <!-- Sub-block 7B: Found Word Views -->
-  <rect x="1362" y="296" width="168" height="226" rx="8" fill="#0f172a" stroke="#c084fc" stroke-width="1.5"/>
-  <rect x="1362" y="296" width="168" height="24" rx="8" fill="#581c87"/>
-  <text x="1446" y="312" fill="#f5f3ff" font-size="12" font-weight="700" text-anchor="middle">7B. Word Views</text>
-
-  <!-- Trie Text Ribbon + Zero-Copy Pointers -->
-  <g transform="translate(1374, 336)" font-family="Consolas, monospace" font-size="12" font-weight="700" text-anchor="middle">
-    <rect x="0" y="0" width="144" height="32" rx="4" fill="#4c1d95" stroke="#c084fc"/>
-    <text x="72" y="21" fill="#fff">#102 → "CAT"</text>
-
-    <rect x="0" y="42" width="144" height="32" rx="4" fill="#4c1d95" stroke="#c084fc"/>
-    <text x="72" y="63" fill="#fff">#101 → "CAR"</text>
-
-    <rect x="0" y="84" width="144" height="32" rx="4" fill="#4c1d95" stroke="#c084fc"/>
-    <text x="72" y="105" fill="#fff">#108 → "TAR"</text>
-
-    <rect x="0" y="126" width="144" height="44" rx="5" fill="#064e3b" stroke="#34d399" stroke-width="1.5"/>
-    <text x="72" y="145" fill="#a7f3d0" font-size="11">[C|A|B|C|A|R|C|A|T]</text>
-    <text x="72" y="162" fill="#34d399" font-size="11">#101,#102 → 0</text>
+    <!-- Selective Bit Clear -->
+    <rect x="0" y="84" width="392" height="26" rx="5" fill="#082a23" stroke="#34d399" stroke-opacity="0.7"/>
+    <text x="196" y="101" fill="#a7f3d0" font-size="10.5">Selective reset (touched blocks):  <tspan fill="#34d399">bits[node &gt;&gt; 6] = 0</tspan></text>
   </g>
 </svg>
