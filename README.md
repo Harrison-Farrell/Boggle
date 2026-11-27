@@ -47,14 +47,19 @@ Recorded cumulative performance gains include:
 |:---|:---|:---|
 | Original fixed-board solve, steps 1–13 | 11,571 → 1,051 ns | **90.9% less time; 11.0× faster** |
 | Original fixed-board solve, through Round 9, 2,000-word list | 11,571 → 341 ns | **97.1% less time; 33.9× faster** |
+| Original fixed-board solve, through Round 10, 2,000-word list | 11,571 → 293 ns | **97.5% less time; 39.5× faster** |
 | Million-board shuffle and solve, through Round 2, 2,000-word list | 4.61 → 0.13 s | **97.2% less time; 35.5× faster** |
 | Million-board shuffle and solve, through Round 2, 138,735-word list | 19.8 → 0.50 s | **97.5% less time; 39.6× faster** |
 | Million-board shuffle and solve, Round 8 → Round 9, 2,000-word list (1 / 32 threads) | 0.941 → 0.593 s / 0.0979 → 0.0471 s | **37.0% / 51.9% less time; 1.59× / 2.08× faster** |
 | Million-board shuffle and solve, Round 8 → Round 9, 138,735-word list (1 / 32 threads) | 3.628 → 2.638 s / 0.3041 → 0.1890 s | **27.3% / 37.8% less time; 1.38× / 1.61× faster** |
+| Million-board shuffle and solve, Round 9 → Round 10, 2,000-word list (1 / 32 threads) | 0.584 → 0.328 s / 0.0605 → 0.0400 s | **43.9% / 33.9% less time; 1.78× / 1.51× faster** |
+| Million-board shuffle and solve, Round 9 → Round 10, 138,735-word list (1 / 32 threads) | 2.656 → 1.212 s / 0.2146 → 0.1118 s | **54.4% / 47.9% less time; 2.19× / 1.92× faster** |
 | Varied-board solve with reused word views, Rounds 6–8, 2,000-word list | 1,183 → 804 ns | **32.0% less time; 1.47× faster** |
 | Varied-board solve with reused word views, Rounds 6–8, 138,735-word list | 5,818 → 3,579 ns | **38.5% less time; 1.63× faster** |
 | Varied-board solve with reused word views, Round 8 → Round 9, 2,000-word list | 817 → 540 ns | **33.9% less time; 1.51× faster** |
 | Varied-board solve with reused word views, Round 8 → Round 9, 138,735-word list | 3,503 → 2,609 ns | **25.5% less time; 1.34× faster** |
+| Varied-board solve with reused word views, Round 9 → Round 10, 2,000-word list | 582 → 335 ns | **42.5% less time; 1.74× faster** |
+| Varied-board solve with reused word views, Round 9 → Round 10, 138,735-word list | 2,774 → 1,277 ns | **54.0% less time; 2.17× faster** |
 
 These comparisons cover different stages and workloads: the million-board gains include multithreading, while the varied-board figures measure single-thread solving. They cannot be combined into one overall speed-up. The [optimization history](docs/optimization-history.md) records the hardware, methodology, and raw results. See [benchmarking](docs/benchmarking.md) to measure your own build.
 

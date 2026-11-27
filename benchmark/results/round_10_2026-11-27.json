@@ -1,0 +1,149 @@
+{
+  "baseline_commit": "fa6336d",
+  "date": "2026-11-27",
+  "hardware": "13th Gen Intel(R) Core(TM) i9-13900HX (24 cores / 32 threads: 8 P-cores + 16 E-cores)",
+  "compiler": "Clang 22.1.0 (x86_64-pc-windows-msvc)",
+  "configuration": "Windows Release, -O3 -DNDEBUG -march=native, SSSE3/BMI1/POPCNT enabled",
+  "scope": "Unconfounded ABBA single-board Google Benchmarks (pinned to logical CPU 2, 10 randomly interleaved repetitions, identical 4,096 boards seeded with 2024 before BoggleBoard PRNG change), 32-thread BM_SolveRandomBoards throughput, isolated BoggleBoard::Shuffle() microbenchmark, and 5-pair alternating 1-million-board shuffle-and-solve challenge (1 thread and 32 threads)",
+  "board_seed": 2024,
+  "board_count": 4096,
+  "repetitions_per_run": 10,
+  "random_interleaving": true,
+  "single_board_benchmarks": {
+    "BM_SolveFixedBoard/basic_english_2000": {
+      "run_medians_ns": {
+        "before1": 344.43,
+        "after1": 291.05,
+        "after2": 295.53,
+        "before2": 350.22
+      },
+      "before_median_ns": 347.33,
+      "after_median_ns": 293.29,
+      "latency_reduction_percent": 15.56,
+      "speed_up": 1.18
+    },
+    "BM_SolveViewsReused/basic_english_2000": {
+      "run_medians_ns": {
+        "before1": 564.90,
+        "after1": 327.60,
+        "after2": 341.44,
+        "before2": 599.15
+      },
+      "before_median_ns": 582.03,
+      "after_median_ns": 334.52,
+      "latency_reduction_percent": 42.53,
+      "speed_up": 1.74
+    },
+    "BM_SolveViewsReused/boggle_words_138735": {
+      "run_medians_ns": {
+        "before1": 2718.54,
+        "after1": 1260.25,
+        "after2": 1293.15,
+        "before2": 2829.48
+      },
+      "before_median_ns": 2774.01,
+      "after_median_ns": 1276.70,
+      "latency_reduction_percent": 53.98,
+      "speed_up": 2.17
+    },
+    "BM_SolveViewsFresh/basic_english_2000": {
+      "run_medians_ns": {
+        "before1": 615.07,
+        "after1": 361.12,
+        "after2": 364.40,
+        "before2": 622.77
+      },
+      "before_median_ns": 618.92,
+      "after_median_ns": 362.76,
+      "latency_reduction_percent": 41.39,
+      "speed_up": 1.71
+    },
+    "BM_SolveViewsFresh/boggle_words_138735": {
+      "run_medians_ns": {
+        "before1": 2914.27,
+        "after1": 1405.74,
+        "after2": 1445.06,
+        "before2": 2999.31
+      },
+      "before_median_ns": 2956.79,
+      "after_median_ns": 1425.40,
+      "latency_reduction_percent": 51.79,
+      "speed_up": 2.07
+    },
+    "BM_SolveRandomBoards/basic_english_2000": {
+      "run_medians_ns": {
+        "before1": 623.36,
+        "after1": 407.81,
+        "after2": 408.58,
+        "before2": 651.60
+      },
+      "before_median_ns": 637.48,
+      "after_median_ns": 408.20,
+      "latency_reduction_percent": 35.97,
+      "speed_up": 1.56
+    },
+    "BM_SolveRandomBoards/boggle_words_138735": {
+      "run_medians_ns": {
+        "before1": 2963.68,
+        "after1": 1729.90,
+        "after2": 1723.87,
+        "before2": 3078.02
+      },
+      "before_median_ns": 3020.85,
+      "after_median_ns": 1726.89,
+      "latency_reduction_percent": 42.83,
+      "speed_up": 1.75
+    },
+    "BM_SolveRandomBoards/basic_english_2000/threads:32": {
+      "before_items_per_second": 22560475,
+      "after_items_per_second": 32094354,
+      "speed_up": 1.42
+    },
+    "BM_SolveRandomBoards/boggle_words_138735/threads:32": {
+      "before_items_per_second": 5080079,
+      "after_items_per_second": 8062403,
+      "speed_up": 1.59
+    }
+  },
+  "board_shuffle_microbenchmark": {
+    "shuffle_ns_before": 26.25,
+    "shuffle_ns_after": 11.10,
+    "shuffle_reduction_percent": 57.71,
+    "shuffle_speed_up": 2.36,
+    "ctor_ns_before": 1037.4,
+    "ctor_ns_after": 17.2,
+    "ctor_speed_up": 60.31,
+    "sizeof_bytes_before": 5032,
+    "sizeof_bytes_after": 64
+  },
+  "million_board_challenge": {
+    "basic_english_2000": {
+      "pairs_1_thread_before_seconds": [0.5759, 0.5842, 0.5851, 0.5829, 0.5878],
+      "pairs_1_thread_after_seconds": [0.3224, 0.3272, 0.3308, 0.3284, 0.3275],
+      "single_thread_before_seconds": 0.5842,
+      "single_thread_after_seconds": 0.3275,
+      "single_thread_reduction_percent": 43.94,
+      "single_thread_speed_up": 1.78,
+      "pairs_32_thread_before_seconds": [0.0429, 0.0605, 0.0717, 0.0565, 0.0679],
+      "pairs_32_thread_after_seconds": [0.0321, 0.0478, 0.0398, 0.0400, 0.0448],
+      "multi_thread_32_before_seconds": 0.0605,
+      "multi_thread_32_after_seconds": 0.0400,
+      "multi_thread_32_reduction_percent": 33.88,
+      "multi_thread_32_speed_up": 1.51
+    },
+    "boggle_words_138735": {
+      "pairs_1_thread_before_seconds": [2.6557, 2.6284, 2.6562, 2.6862, 2.6583],
+      "pairs_1_thread_after_seconds": [1.2119, 1.2117, 1.2818, 1.2175, 1.2115],
+      "single_thread_before_seconds": 2.6562,
+      "single_thread_after_seconds": 1.2119,
+      "single_thread_reduction_percent": 54.37,
+      "single_thread_speed_up": 2.19,
+      "pairs_32_thread_before_seconds": [0.2094, 0.2512, 0.2146, 0.2223, 0.2103],
+      "pairs_32_thread_after_seconds": [0.1043, 0.1045, 0.1118, 0.1160, 0.1283],
+      "multi_thread_32_before_seconds": 0.2146,
+      "multi_thread_32_after_seconds": 0.1118,
+      "multi_thread_32_reduction_percent": 47.90,
+      "multi_thread_32_speed_up": 1.92
+    }
+  }
+}

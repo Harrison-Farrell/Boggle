@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <iostream>
 #include <memory>
+#include <random>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -61,34 +62,69 @@ double TimeBoards(const std::shared_ptr<const CompactTrie> &trie,
                   uint32_t number_of_boards, uint32_t thread_count) {
   using namespace std::chrono;
 
-  // Threads take boards in chunks as they finish, rather than an equal share
-  // up front, so fast cores (or ones the OS is not busy with) do more of the
-  // work. This matters on CPUs that mix performance and efficiency cores.
-  constexpr uint32_t chunk_size = 1000;
-  std::atomic<uint32_t> next_board{0};
-
   const auto start_time = steady_clock::now();
-  {
-    std::vector<std::jthread> workers;
-    workers.reserve(thread_count);
-    for (uint32_t thread = 0; thread < thread_count; ++thread) {
-      workers.emplace_back([&trie, &next_board, number_of_boards] {
-        BoggleBoard board;
-        BoggleSolver solver(trie);
-        std::vector<std::string_view> found_words;
-        while (true) {
-          const uint32_t first = next_board.fetch_add(chunk_size);
-          if (first >= number_of_boards) {
-            break;
-          }
-          const uint32_t last = std::min(first + chunk_size, number_of_boards);
-          for (uint32_t i = first; i < last; ++i) {
-            board.Shuffle();
-            solver.SolveInto(board.GetFlattenedBoard(), found_words);
-          }
-        }
-      });
+
+  // Single-thread fast path: run directly on the calling thread with no OS
+  // thread spawn/join overhead and no atomic work counter.
+  if (thread_count <= 1) {
+    BoggleBoard board(std::random_device{}());
+    BoggleSolver solver(trie);
+    std::vector<std::string_view> found_words;
+    found_words.reserve(256);
+    for (uint32_t i = 0; i < number_of_boards; ++i) {
+      board.Shuffle();
+      solver.SolveInto(board.GetFlattenedBoard(), found_words);
     }
+    return duration<double>(steady_clock::now() - start_time).count();
+  }
+
+  // Draw one OS entropy seed on the calling thread and derive uncorrelated
+  // per-worker seeds via golden-ratio spacing + SplitMix64 in BoggleBoard,
+  // avoiding N-way contention on std::random_device during thread startup.
+  const uint32_t base_seed = std::random_device{}();
+
+  // Cache-line-aligned atomic work counter using single-op guided dynamic
+  // chunking: starts at 2,048 boards to halve atomic traffic in the bulk and
+  // tapers down to 256 near completion (using the previous fetch_add result so
+  // no extra atomic load is issued) to keep hybrid P/E cores balanced.
+  alignas(64) std::atomic<uint32_t> next_board{0};
+
+  auto run_worker = [&trie, &next_board, number_of_boards, thread_count,
+                     base_seed](uint32_t worker_id) {
+    BoggleBoard board(base_seed + (worker_id * 0x9e3779b9U));
+    BoggleSolver solver(trie);
+    std::vector<std::string_view> found_words;
+    found_words.reserve(256);
+
+    uint32_t approx_done = 0;
+    while (true) {
+      const uint32_t remaining =
+          approx_done < number_of_boards ? number_of_boards - approx_done : 0U;
+      const uint32_t chunk =
+          std::clamp(remaining / (thread_count * 4U), 256U, 2048U);
+      const uint32_t first =
+          next_board.fetch_add(chunk, std::memory_order_relaxed);
+      if (first >= number_of_boards) {
+        break;
+      }
+      const uint32_t last = std::min(first + chunk, number_of_boards);
+      for (uint32_t i = first; i < last; ++i) {
+        board.Shuffle();
+        solver.SolveInto(board.GetFlattenedBoard(), found_words);
+      }
+      approx_done = last;
+    }
+  };
+
+  {
+    // Spawn thread_count - 1 background threads and run worker 0 directly on
+    // the calling thread so the main thread contributes immediately.
+    std::vector<std::jthread> workers;
+    workers.reserve(thread_count - 1);
+    for (uint32_t thread = 1; thread < thread_count; ++thread) {
+      workers.emplace_back(run_worker, thread);
+    }
+    run_worker(0);
   } // std::jthread joins on destruction
   return duration<double>(steady_clock::now() - start_time).count();
 }

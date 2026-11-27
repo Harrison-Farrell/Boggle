@@ -225,3 +225,81 @@ Measured on 27 November 2026 on the same machine, single thread pinned to logica
 [Recorded benchmark results](../benchmark/results/round_9_2026-11-27.json)
 
 All 39 Release tests passed, verifying exact word sets and ordering across all seeded and special-case boards.
+
+### Round 10 — Direct depth-2 seeding, decoupled branchless two-phase BFS, deferred deduplication, `Xoshiro256++` shuffling, and guided multi-core scheduling
+
+#### Profiling and disassembly methodology
+
+Instrumenting Round 9 with per-phase and per-level `rdtscp` cycle counters and inspecting the Clang 22 `-O3 -march=native` assembly exposed five structural bottlenecks across single-board solving and million-board throughput:
+
+- **Shallow-level `keep >= 3` branch mispredictions and register spills**: Although Levels 1 and 2 live entirely in 3.3 KB of L1 cache, Level 1 alone consumed **21.8%** of total solve time on the 2,000-word list (`40.6%` of paths had `keep >= 3`) and Levels 1–2 consumed **28.2%** on the 138,735-word list (`80.3%` of Level-1 and `39.7%` of Level-2 paths had `keep >= 3`). The `if (keep != 0) [[unlikely]]` tail triggered branch mispredictions on both entry and `do-while` exit, and register pressure inside the tail spilled `cell`, `node`, and `visited` to the stack on every iteration.
+- **Unconditional `found_word_bits_` read-modify-write on non-word nodes**: In Round 9, 75–87% of visited paths did not end a word, yet every single iteration executed a random load and RMW store (`or [rdx + 8*rbx], rdi`) into the 53 KB `found_word_bits_` bitset (exceeding L1D cache and creating store-to-load forwarding stalls between sibling trie nodes).
+- **Wasted speculative expansion on dead ends & partial stores**: **54.1%** of all visited paths had `keep == 0` (zero matching neighbours), yet Round 9 still executed two `tzcnt`/`blsr`/`popcnt` expansions and **six separate narrow stores** (`dword` + `word` + `word` × 2, rather than 64-bit stores) per path, while reloading `trie.nodes_.data()` from the stack on every iteration.
+- **Word collection overhead**: `GetWord()` re-checked `std::string` SSO capacity on `word_text_` and `emplace_back` checked vector capacity on every found word; naive `resize()` introduced an unnecessary `memset` before overwriting.
+- **Million-board shuffle and thread-startup bottlenecks**: `BoggleBoard` carried a 5,032-byte `std::mt19937` state whose `operator()` compiled to 8 non-inlined function calls per board (26.25 ns/shuffle, 1,037 ns/constructor), and `TimeBoards` invoked 32 concurrent `std::random_device` OS syscalls, spawned an extra thread while idling the calling thread, used `seq_cst` atomics on a fixed 1,000-board chunk (creating 3–9 ms tail skew across P-cores and E-cores), and did not short-circuit the 1-thread run.
+
+#### Optimization methods implemented
+
+1. **Direct L0 → L2 seeding via a 1,728-byte L1-resident pair table (`CompactTrie`, `BoggleSolver`)**: `CompactTrie` precomputes a cache-line-aligned table `pair_nodes_[27][32]` (`uint16_t`, 64 bytes per first letter; depth-2 BFS node indices are always $\le 702$). Row and column `INVALID_LETTER` (26) are all zeros, and dead depth-2 leaves (neither a word nor having children) are stored as `0`. For tries without depth-1 words (`HasDepth1Words() == false`, always true for Boggle's 3-letter minimum), `BoggleSolver` bypasses Level 0 and Level 1 completely—clamping invalid bytes to `26` with `_mm_min_epu8` and populating Level 2 directly across the 84 directed board edges with zero SIMD calls, zero `popcnt`, and zero branch mispredictions. Custom tries with 1-letter words fall back to depth-1 seeding automatically.
+2. **Deferred branchless word deduplication (`BoggleSolver`)**: Inside the BFS search loop, `found_word_bits_` is never touched. Each visited node executes only `*found_ptr = node; found_ptr += (mask >> 31);` (a single sequential L1 store and two ALU instructions). Deduplication runs after the search in a compact, branchless bitset pass over only the candidate word hits (~16 on the 2,000-word list; ~122 on the 138,735-word list instead of 124 / 500 paths), preserving exact first-seen order.
+3. **Decoupled two-phase branchless BFS (`Phase A` filter → `Phase B` multi-pass 2-slot compaction) (`BoggleSolver`)**:
+   - **Phase A (Filter)**: Hoists `const CompactTrie::Node *__restrict nodes`, computes the positive 16-bit matching-cell mask directly using `_mm_add_epi8(matching_bits, 0x7F)` + `_mm_movemask_epi8` (each byte of `matching_bits` is `0` or a power of two $1\dots 128$, so adding `127` sets bit 7 iff non-zero, eliminating `vpcmpeqb` and `xor 0xFFFF`), intersects `NEIGHBOUR_MASKS[cell] & ~visited & match`, and branchlessly appends only surviving non-dead paths (`keep != 0`, ~46% of paths) into an `alignas(16)` `ActiveState` buffer. Dead-end paths (~54%) never execute `tzcnt`, `popcnt`, or path packing.
+   - **Phase B (Expand)**: Runs a multi-pass in-place branchless 2-slot compaction loop over `active_`. Every active item is guaranteed `keep != 0`, extracts 1 or 2 neighbours unconditionally (`next_ptr += 1 + (k1 != 0)`), writes true single 64-bit stores (`using PackedPath = uint64_t`) using a 33-entry `constexpr` `CELL_PACKED` lookup table (eliminating `bts` + dual shift chains), and compacts entries with `k2 != 0` in place until `active_` is empty. Zero data-dependent branches remain anywhere in the search.
+   - **Scalar fallback**: When `__SSSE3__` is unavailable, `matching_cells` iterates only over letters present on the board (`mask & board_letter_mask`) via `letter_cells[26]` while sharing the exact same L0 → L2 table, deferred deduplication, and decoupled two-phase search.
+4. **Zero-`memset` word emission and hoisted trie pointers (`CompactTrie`, `BoggleSolver`)**: Exposes `GetWordSpansData()` and `GetWordTextData()` so word collection eliminates per-word `std::string` SSO checks. For `SolveInto`, a pure random-access `WordViewIterator` passed to `found_words.assign(...)` sizes the vector once, skips zero-initialization (`memset`), and writes views directly without per-element capacity checks. For `Solve`, `reserve(unique_count)` + `emplace_back(text + offset, len)` constructs owned strings directly in place.
+5. **Inline `Xoshiro256++` PRNG and flat unrolled Fisher-Yates shuffle (`BoggleBoard`)**: Replaced `std::mt19937` (5,032 bytes, 8 non-inlined calls per shuffle) with pure ISO C++23 `Xoshiro256++` (32-byte state, period $2^{256}-1$, seeded via SplitMix64), stored `board_` as a flat `alignas(16) std::array<char, BOARD_SIZE>`, and inlined a compile-time-unrolled single-pass Fisher-Yates + face roll consuming four 64-bit PRNG draws (32 random bytes) per board. Isolated `Shuffle()` dropped from **26.25 ns → 11.10 ns** (2.36× faster), constructor time from **1,037 ns → 17.2 ns** (60× faster), and `sizeof(BoggleBoard)` from **5,032 B → 64 B** (one cache line).
+6. **Low-contention guided multi-core scheduling (`src/main.cpp`)**: Added a direct single-thread path (no thread spawn or atomic loop), had the calling thread run worker 0 while spawning `thread_count - 1` `std::jthread`s, drew a single `std::random_device` seed on the main thread with golden-ratio-spaced SplitMix64 worker seeds (eliminating 32-way CSPRNG contention), aligned `next_board` to a 64-byte cache line with `std::memory_order_relaxed`, pre-reserved per-worker output buffers, and replaced fixed 1,000-board chunks with single-op guided dynamic chunking (`std::clamp(remaining / (thread_count * 4), 256U, 2048U)` using the previous `fetch_add` result so no extra atomic load is issued).
+
+#### Alternatives tested and rejected during ablation
+
+- **2-wide and 4-wide AVX2 Phase A**: Packing two 16-byte masks into a 256-bit `ymm` register (`vinserti128` + `vpshufd` + `vpshufb`) lost to Clang's auto-unrolled pure 128-bit SSSE3 loop by ~80–140 ns on the 138,735-word dictionary due to 3-cycle Port-5 lane-crossing latency and `vzeroupper` overhead.
+- **L1D open-addressed hash table for deferred deduplication**: Replacing the 53 KB `found_word_bits_` bitset with a 4 KB open-addressed hash table regressed the 138,735-word solve by +426 ns due to unpredictable probing branches compared to the branchless bitset.
+- **3-slot and 4-slot Phase B drain**: Expanding 3 or 4 slots per pass increased speculative `popcnt` work on 1- and 2-neighbour active states and regressed both dictionaries (+45 to +250 ns vs. 2-slot).
+- **Software prefetching in Phase A (`_mm_prefetch`)**: Regressed both dictionaries (+25 to +70 ns) because the tiny, branchless Phase A loop already fits dozens of independent trie loads inside the CPU's out-of-order window.
+- **Guided chunking with a separate pre-load (`load` + `fetch_add`) and 64-board tail**: Added extra cache-line sharing transitions on the 2,000-word list (+2.7 ms vs. single-op `fetch_add` with a 256-board floor).
+
+#### Single-board solve benchmarks (Round 9 vs. Round 10)
+
+Measured on 27 November 2026 on Windows 11 with a 13th Gen Intel Core i9-13900HX (24 cores / 32 threads), Clang 22.1.0, Release build (`-O3 -DNDEBUG -march=native`). To prevent PRNG differences from confounding solver measurements, the single-board and 32-thread `bm_BoggleSolver` comparisons ran on the **exact same 4,096 boards** (seed 2024) in ABBA order (`before1`, `after1`, `after2`, `before2`), pinned to logical CPU 2 (`0x4`), with 10 randomly interleaved repetitions per run:
+
+| Benchmark | Dictionary | Round 9 (Median) | Round 10 (Median) | Time reduction | Speed-up |
+|:---|:---|---:|---:|---:|---:|
+| `BM_SolveFixedBoard` | 2,000 words | 347 ns | 293 ns | 15.6% | 1.18× |
+| `BM_SolveViewsReused` | 2,000 words | 582 ns | 335 ns | 42.5% | 1.74× |
+| `BM_SolveViewsReused` | 138,735 words | 2,774 ns | 1,277 ns | 54.0% | 2.17× |
+| `BM_SolveViewsFresh` | 2,000 words | 619 ns | 363 ns | 41.4% | 1.71× |
+| `BM_SolveViewsFresh` | 138,735 words | 2,957 ns | 1,425 ns | 51.8% | 2.07× |
+| `BM_SolveRandomBoards` | 2,000 words | 637 ns | 408 ns | 36.0% | 1.56× |
+| `BM_SolveRandomBoards` | 138,735 words | 3,021 ns | 1,727 ns | 42.8% | 1.75× |
+| `BM_SolveRandomBoards` (32 threads) | 2,000 words | 22.56 M boards/s | 32.09 M boards/s | — | 1.42× |
+| `BM_SolveRandomBoards` (32 threads) | 138,735 words | 5.08 M boards/s | 8.06 M boards/s | — | 1.59× |
+
+#### Million-board shuffle and solve challenge (Round 9 vs. Round 10)
+
+Measured over five alternating baseline/new pairs (`SolveBoggleBoard_Release.exe`, reporting the median of the five runs for each dictionary):
+
+| Dictionary | Threads | Round 9 (Median) | Round 10 (Median) | Time reduction | Speed-up |
+|:---|---:|---:|---:|---:|---:|
+| 2,000 words | 1 thread | 0.5842 s | 0.3275 s | 43.9% | 1.78× |
+| 2,000 words | 32 threads | 0.0605 s | 0.0400 s | 33.9% | 1.51× |
+| 138,735 words | 1 thread | 2.6562 s | 1.2119 s | 54.4% | 2.19× |
+| 138,735 words | 32 threads | 0.2146 s | 0.1118 s | 47.9% | 1.92× |
+
+On isolated single-process 32-thread runs without prior thermal load from the 1-thread phase, 1 million boards completed in **0.027–0.032 s** (2,000 words) and **0.096–0.104 s** (138,735 words).
+
+To reproduce the single-board and million-board measurements after a Release build:
+
+```powershell
+# Single-board benchmarks (pinned to logical CPU 2)
+Set-Location build/bin/benchmark/Release
+(Get-Process -Id $PID).ProcessorAffinity = 0x4
+.\bm_BoggleSolver_Release.exe '--benchmark_filter=^BM_Solve(FixedBoard|ViewsReused|ViewsFresh|RandomBoards)/[^/]+/repeats:10$' '--benchmark_enable_random_interleaving=true' '--benchmark_min_time=0.25s'
+
+# Million-board challenge (unpinned, from repository root)
+.\build\bin\app\Release\SolveBoggleBoard_Release.exe .\resources\basic_english_words_2000.txt
+.\build\bin\app\Release\SolveBoggleBoard_Release.exe .\resources\boggle_words_138735.txt
+```
+
+[Recorded benchmark results](../benchmark/results/round_10_2026-11-27.json)
+
+Validation: all 43 unit tests passed across `Release`, `Debug`, and `RelWithDebInfo` builds with zero warnings, including new tests for `CompactTrie::GetPairNodeTable()`, `HasDepth1Words()`, custom `min_word_length = 1` tries, and extreme duplicate-hit dense boards (`found_word_nodes_` dynamic growth). All 13 solver tests also passed when compiled without SSSE3 (`-mno-ssse3`), exercising the scalar `letter_cells` fallback. Sorted word sets matched Round 9 across all 4,096 seeded boards for both dictionaries.
